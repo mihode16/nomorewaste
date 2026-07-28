@@ -1,0 +1,91 @@
+version: "3.8"
+
+services:
+  # ==================== MYSQL DATABASE ====================
+  db:
+    image: mysql:8.0
+    container_name: nomorewaste_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - nomorewaste_network
+
+  # ==================== BACKEND API (GO) ====================
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: nomorewaste_backend
+    restart: always
+    ports:
+      - "${API_PORT}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      API_PORT: 8080
+    volumes:
+      - ./backend:/app
+      - /app/tmp
+    networks:
+      - nomorewaste_network
+
+  # ==================== FRONTEND (PHP) ====================
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    container_name: nomorewaste_frontend
+    restart: always
+    ports:
+      - "8000:80"
+    depends_on:
+      - backend
+    environment:
+      API_URL: http://backend:8080
+    volumes:
+      - ./frontend:/var/www/html
+      - /var/www/html/vendor
+    networks:
+      - nomorewaste_network
+
+  # ==================== NGINX (Reverse Proxy) ====================
+  nginx:
+    image: nginx:alpine
+    container_name: nomorewaste_nginx
+    restart: always
+    ports:
+      - "${FRONTEND_PORT}:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend/public:/usr/share/nginx/html/public:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - nomorewaste_network
+
+networks:
+  nomorewaste_network:
+    driver: bridge
+
+volumes:
+  db_data:

@@ -1,0 +1,32 @@
+# Environnement
+.env
+.env.local
+.env.*.local
+
+# Docker
+docker/backend/tmp
+docker/frontend/tmp
+
+# Go
+backend/tmp
+backend/*.exe
+backend/*.test
+backend/vendor/
+
+# PHP
+frontend/vendor/
+frontend/composer.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
