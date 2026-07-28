@@ -4,10 +4,18 @@ class ClientApi
 {
     private string $baseUrl;
     
+
+    
     public function __construct()
     {
-        $this->baseUrl = getenv('API_URL') ?: 'http://backend:8080';
+        // Si l'API est sur Docker (localhost:8080)
+        $this->baseUrl = 'http://localhost:8080';
+        
+        // En production, utiliser une variable d'environnement
+        // $this->baseUrl = getenv('API_URL') ?: 'http://localhost:8080';
     }
+    
+
     
     public function get(string $endpoint, array $params = []): array
     {

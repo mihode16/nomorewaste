@@ -41,7 +41,7 @@ CREATE TABLE commercant (
 -- ============================================================
 CREATE TABLE benevole (
     id INT PRIMARY KEY,
-    date_candidature DATE DEFAULT CURRENT_DATE,
+    date_candidature DATETIME DEFAULT CURRENT_TIMESTAMP,
     statut_candidature VARCHAR(20) DEFAULT 'En attente',
     FOREIGN KEY (id) REFERENCES utilisateur(id) ON DELETE CASCADE
 );

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -45,6 +44,9 @@ func getEnv(key, defaultValue string) string {
     return defaultValue
 }
 
+// Fonction utilitaire gardée pour une utilisation future
+// Si tu veux l'utiliser plus tard, décommente-la
+/*
 func getEnvInt(key string, defaultValue int) int {
     if value := os.Getenv(key); value != "" {
         if intVal, err := strconv.Atoi(value); err == nil {
@@ -53,3 +55,4 @@ func getEnvInt(key string, defaultValue int) int {
     }
     return defaultValue
 }
+*/
