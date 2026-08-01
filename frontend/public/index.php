@@ -11,7 +11,7 @@ define('BASE_PATH', dirname(__DIR__));
 define('BASE_URL', '/nomorewaste');
 
 // Charger l'autoloader
-require_once BASE_PATH . '/frontend/src/noyau/Autoloader.php';
+require_once BASE_PATH . '../src/noyau/Autoloader.php';
 Autoloader::charger();
 
 // Charger le routeur

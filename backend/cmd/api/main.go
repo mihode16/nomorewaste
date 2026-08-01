@@ -28,12 +28,15 @@ func main() {
 
     // Initialiser les repositories
     commercantRepo := repositories.NouveauCommercantRepository(db)
+	collecteRepo := repositories.NouveauCollecteRepository(db)
 
     // Initialiser les services
     commercantService := services.NouveauCommercantService(commercantRepo)
+	collecteService := services.NouveauCollecteService(collecteRepo)
 
     // Initialiser les contrôleurs
     commercantControleur := controleurs.NouveauCommercantControleur(commercantService)
+	collecteControleur := controleurs.NouveauCollecteControleur(collecteService)
 
     // Créer le routeur
     router := mux.NewRouter()
@@ -47,7 +50,15 @@ func main() {
     router.HandleFunc("/api/commercants/{id}/renouveler", commercantControleur.RenouvelerAdhesion).Methods("POST")
     router.HandleFunc("/api/commercants/adhesions/expirantes", commercantControleur.VerifierAdhesionsExpirantes).Methods("GET")
 
-    // Route de santé
+    // Routes pour les collectes
+	router.HandleFunc("/api/collectes", collecteControleur.Creer).Methods("POST")
+	router.HandleFunc("/api/collectes", collecteControleur.Lister).Methods("GET")
+	router.HandleFunc("/api/collectes/{id}", collecteControleur.TrouverParID).Methods("GET")
+	router.HandleFunc("/api/collectes/{id}", collecteControleur.MettreAJour).Methods("PUT")
+	router.HandleFunc("/api/collectes/{id}/terminer", collecteControleur.Terminer).Methods("POST")
+	router.HandleFunc("/api/collectes/{id}", collecteControleur.Supprimer).Methods("DELETE")
+	
+	// Route de santé
     router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusOK)
         w.Write([]byte(`{"status":"ok"}`))

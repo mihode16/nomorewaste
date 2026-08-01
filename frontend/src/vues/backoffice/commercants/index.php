@@ -9,7 +9,7 @@
                 <hr class="border-light">
             </div>
             <nav class="nav flex-column">
-                <a href="/admin/dashboard" class="nav-link">
+                <a href="../dashboard.php" class="nav-link">
                     <i class="bi bi-speedometer2"></i> Tableau de bord
                 </a>
                 <a href="/admin/commercants" class="nav-link active">
@@ -38,12 +38,11 @@
         <div class="col-md-10 p-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><?php echo $titre ?? 'Gestion des commerçants'; ?></h2>
-                <a href="/admin/commercants/creer" class="btn btn-success">
+                <a href="creer.php" class="btn btn-success">
                     <i class="bi bi-plus-circle"></i> Nouveau commerçant
                 </a>
             </div>
 
-            <!-- Messages flash -->
             <?php if (isset($_SESSION['flash'])): ?>
                 <div class="alert alert-<?php echo $_SESSION['flash']['type']; ?> alert-dismissible fade show">
                     <?php echo $_SESSION['flash']['message']; ?>
@@ -52,7 +51,6 @@
                 <?php unset($_SESSION['flash']); ?>
             <?php endif; ?>
 
-            <!-- Tableau des commerçants -->
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
@@ -102,8 +100,8 @@
                                                     <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#renouvelerModal<?php echo $c['id']; ?>">
                                                         <i class="bi bi-arrow-repeat"></i>
                                                     </button>
-                                                    <form method="POST" action="/admin/commercants/<?php echo $c['id']; ?>/supprimer" style="display:inline;">
-                                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Confirmer la suppression ?')">
+                                                    <form method="POST" action="/admin/commercants/<?php echo $c['id']; ?>/supprimer" style="display:inline;" onsubmit="return confirm('Confirmer la suppression ?')">
+                                                        <button type="submit" class="btn btn-danger">
                                                             <i class="bi bi-trash"></i>
                                                         </button>
                                                     </form>

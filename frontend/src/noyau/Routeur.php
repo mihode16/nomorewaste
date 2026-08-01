@@ -16,13 +16,15 @@ class Routeur
         $this->ajouterRoute('GET', '/services', 'ServiceControleur', 'index');
         $this->ajouterRoute('GET', '/adherer', 'AdhesionControleur', 'index');
         
-        // Routes backoffice
+        // Routes backoffice - Authentification
         $this->ajouterRoute('GET', '/admin', 'AuthControleur', 'login');
         $this->ajouterRoute('POST', '/admin/login', 'AuthControleur', 'authentifier');
-        $this->ajouterRoute('GET', '/admin/dashboard', 'DashboardControleur', 'index');
         $this->ajouterRoute('GET', '/admin/logout', 'AuthControleur', 'deconnecter');
         
-        // Gestion des commerçants
+        // Routes backoffice - Dashboard
+        $this->ajouterRoute('GET', '/admin/dashboard', 'DashboardControleur', 'index');
+        
+        // Routes backoffice - Commerçants
         $this->ajouterRoute('GET', '/admin/commercants', 'CommercantControleur', 'index');
         $this->ajouterRoute('GET', '/admin/commercants/creer', 'CommercantControleur', 'creer');
         $this->ajouterRoute('POST', '/admin/commercants', 'CommercantControleur', 'enregistrer');
@@ -44,7 +46,22 @@ class Routeur
     
     public function executer(): void
     {
-        $chemin = isset($_GET['url']) ? '/' . trim($_GET['url'], '/') : '/';
+        // Récupérer l'URL sans le sous-dossier
+        $uri = $_SERVER['REQUEST_URI'];
+        $basePath = '/nomorewaste'; // À ajuster selon ta config
+        
+        // Si l'URI commence par le basePath, on l'enlève
+        if (strpos($uri, $basePath) === 0) {
+            $uri = substr($uri, strlen($basePath));
+        }
+        
+        // Si l'URI est vide ou juste un slash
+        if ($uri === '' || $uri === '/') {
+            $chemin = '/';
+        } else {
+            $chemin = '/' . trim($uri, '/');
+        }
+        
         $methode = $_SERVER['REQUEST_METHOD'];
         
         foreach ($this->routes as $route) {
