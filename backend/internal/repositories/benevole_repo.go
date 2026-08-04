@@ -64,9 +64,24 @@ func (r *BenevoleRepository) TrouverTous() ([]modeles.Benevole, error) {
 	var list []modeles.Benevole
 	for rows.Next() {
 		var b modeles.Benevole
-		if err := rows.Scan(&b.ID, &b.Email, &b.Nom, &b.Prenom, &b.Telephone, &b.Adresse, &b.DateInscription, &b.EstActif, &b.DateCandidature, &b.StatutCandidature); err != nil {
+		var telephone, adresse sql.NullString
+		var dateCandidature sql.NullTime
+
+		err := rows.Scan(
+			&b.ID, &b.Email, &b.Nom, &b.Prenom, &telephone, &adresse,
+			&b.DateInscription, &b.EstActif,
+			&dateCandidature, &b.StatutCandidature,
+		)
+		if err != nil {
 			return nil, err
 		}
+
+		b.Telephone = telephone.String
+		b.Adresse = adresse.String
+		if dateCandidature.Valid {
+			b.DateCandidature = dateCandidature.Time
+		}
+
 		b.Competences, _ = r.competencesPour(int(b.ID))
 		list = append(list, b)
 	}
@@ -96,16 +111,30 @@ func (r *BenevoleRepository) competencesPour(benevoleID int) ([]modeles.Competen
 
 func (r *BenevoleRepository) TrouverParID(id int) (*modeles.Benevole, error) {
 	var b modeles.Benevole
+	var telephone, adresse sql.NullString
+	var dateCandidature sql.NullTime
+
 	err := r.db.QueryRow(`
 		SELECT u.id, u.email, u.nom, u.prenom, u.telephone, u.adresse, u.date_inscription, u.est_actif,
 		       bv.date_candidature, bv.statut_candidature
 		FROM utilisateur u
 		JOIN benevole bv ON u.id = bv.id
 		WHERE u.id = ?
-	`, id).Scan(&b.ID, &b.Email, &b.Nom, &b.Prenom, &b.Telephone, &b.Adresse, &b.DateInscription, &b.EstActif, &b.DateCandidature, &b.StatutCandidature)
+	`, id).Scan(
+		&b.ID, &b.Email, &b.Nom, &b.Prenom, &telephone, &adresse,
+		&b.DateInscription, &b.EstActif,
+		&dateCandidature, &b.StatutCandidature,
+	)
 	if err != nil {
 		return nil, err
 	}
+
+	b.Telephone = telephone.String
+	b.Adresse = adresse.String
+	if dateCandidature.Valid {
+		b.DateCandidature = dateCandidature.Time
+	}
+
 	b.Competences, _ = r.competencesPour(id)
 	return &b, nil
 }
@@ -144,11 +173,26 @@ func (r *BenevoleRepository) TrouverValides() ([]modeles.Benevole, error) {
 		return nil, err
 	}
 	defer rows.Close()
+
 	var list []modeles.Benevole
 	for rows.Next() {
 		var b modeles.Benevole
-		if err := rows.Scan(&b.ID, &b.Email, &b.Nom, &b.Prenom, &b.Telephone, &b.Adresse, &b.DateInscription, &b.EstActif, &b.DateCandidature, &b.StatutCandidature); err != nil {
+		var telephone, adresse sql.NullString
+		var dateCandidature sql.NullTime
+
+		err := rows.Scan(
+			&b.ID, &b.Email, &b.Nom, &b.Prenom, &telephone, &adresse,
+			&b.DateInscription, &b.EstActif,
+			&dateCandidature, &b.StatutCandidature,
+		)
+		if err != nil {
 			return nil, err
+		}
+
+		b.Telephone = telephone.String
+		b.Adresse = adresse.String
+		if dateCandidature.Valid {
+			b.DateCandidature = dateCandidature.Time
 		}
 		list = append(list, b)
 	}

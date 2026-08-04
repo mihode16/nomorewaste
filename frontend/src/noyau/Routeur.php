@@ -3,9 +3,11 @@
 class Routeur
 {
     private array $routes = [];
+    private string $basePath; 
 
     public function __construct()
     {
+        $this->basePath = '/nomorewaste';
         $this->initialiserRoutes();
     }
 
@@ -87,11 +89,10 @@ class Routeur
         if ($uri === '' || $uri === '/') {
             $chemin = '/';
         } else {
-            $chemin = '/' . trim($uri, '/');
+            $chemin = '/' . ltrim($uri, '/');
         }
 
         $methode = $_SERVER['REQUEST_METHOD'];
-
         foreach ($this->routes as $route) {
             if ($route['methode'] !== $methode) {
                 continue;
