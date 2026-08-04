@@ -19,10 +19,14 @@ class DashboardControleur extends Controleur
         $commercants = $this->apiClient->get('/api/commercants');
         $collectes = $this->apiClient->get('/api/collectes');
         
+         $nbCommercants = ($commercants['code'] === 200) ? count($commercants['data']) : 0;
+        $nbCollectes = ($collectes['code'] === 200) ? count($collectes['data']) : 0;
+        
         $this->rendre('backoffice/dashboard', [
             'titre' => 'Tableau de bord',
-            'nbCommercants' => isset($commercants['data']) ? count($commercants['data']) : 0,
-            'nbCollectes' => isset($collectes['data']) ? count($collectes['data']) : 0
+            'nbCommercants' => $nbCommercants,
+            'nbCollectes' => $nbCollectes,
+            'user' => $_SESSION['user'] ?? null
         ]);
     }
 }

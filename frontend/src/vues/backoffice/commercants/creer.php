@@ -111,7 +111,7 @@ include __DIR__ . '/../../layouts/entete.php';
                                 <button type="submit" class="btn btn-success">
                                     <i class="bi bi-save"></i> Enregistrer
                                 </button>
-                                <a href="/admin/commercants" class="btn btn-secondary">Annuler</a>
+                                <a href="frontend/src/vues/backoffice/commercants/index.php" class="btn btn-secondary">Annuler</a>
                             </div>
                         </div>
                     </form>
