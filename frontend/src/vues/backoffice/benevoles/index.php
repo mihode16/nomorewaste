@@ -1,0 +1,45 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><?php echo htmlspecialchars($titre); ?></h2>
+    <a href="<?php echo url('/admin/benevoles/creer'); ?>" class="btn btn-success"><i class="bi bi-person-plus"></i> Inscrire</a>
+</div>
+
+<div class="card">
+    <div class="card-body table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Compétences</th>
+                    <th>Statut</th>
+                    <th>Candidature</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($benevoles)): ?>
+                    <tr><td colspan="6" class="text-center">Aucun bénévole</td></tr>
+                <?php else: ?>
+                    <?php foreach ($benevoles as $b): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($b['prenom'] . ' ' . $b['nom']); ?></td>
+                            <td><?php echo htmlspecialchars($b['email']); ?></td>
+                            <td>
+                                <?php if (!empty($b['competences'])): ?>
+                                    <?php foreach ($b['competences'] as $comp): ?>
+                                        <span class="badge bg-secondary"><?php echo htmlspecialchars($comp['nom']); ?></span>
+                                    <?php endforeach; ?>
+                                <?php else: ?>—<?php endif; ?>
+                            </td>
+                            <td><?php echo badge_statut($b['statut_candidature']); ?></td>
+                            <td><?php echo format_date($b['date_candidature']); ?></td>
+                            <td>
+                                <a href="<?php echo url('/admin/benevoles/' . $b['id']); ?>" class="btn btn-sm btn-primary"><i class="bi bi-eye"></i></a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>

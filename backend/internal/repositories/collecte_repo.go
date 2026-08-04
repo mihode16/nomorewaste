@@ -2,8 +2,6 @@ package repositories
 
 import (
 	"database/sql"
-	"time"
-
 	"nomorewaste/internal/modeles"
 )
 
@@ -16,13 +14,9 @@ func NouveauCollecteRepository(db *sql.DB) *CollecteRepository {
 }
 
 func (r *CollecteRepository) Creer(collecte *modeles.CollecteCreation) (int, error) {
-    dateHeure, err := time.Parse("2006-01-02 15:04:05", collecte.DateHeureCollecte)
+    dateHeure, err := parseDateTime(collecte.DateHeureCollecte)
     if err != nil {
-        // Essayer un autre format
-        dateHeure, err = time.Parse("2006-01-02T15:04:05", collecte.DateHeureCollecte)
-        if err != nil {
-            return 0, err
-        }
+        return 0, err
     }
 
     result, err := r.db.Exec(`

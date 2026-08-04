@@ -23,10 +23,10 @@ func ChargerConfig() *Config {
     }
 
     return &Config{
-        DBHost:     getEnv("DB_HOST", "db"),
+        DBHost:     getEnv("DB_HOST", "127.0.0.1"),
         DBPort:     getEnv("DB_PORT", "3306"),
-        DBUser:     getEnv("DB_USER", "nomorewaste_user"),
-        DBPassword: getEnv("DB_PASSWORD", "nomorewaste_pass"),
+        DBUser:     getEnv("DB_USER", "root"),
+        DBPassword: getEnv("DB_PASSWORD", "root"),
         DBName:     getEnv("DB_NAME", "nomorewaste"),
         APIPort:    getEnv("API_PORT", "8080"),
     }

@@ -208,3 +208,28 @@ type ServicePlanningCreation struct {
     ServiceID      int    `json:"service_id"`
     BenevoleID     int    `json:"benevole_id"`
 }
+
+// ============================================================
+// ADHERENT
+// ============================================================
+type Adherent struct {
+    Utilisateur
+    DateDebutAdhesion time.Time `json:"date_debut_adhesion"`
+    DateFinAdhesion   time.Time `json:"date_fin_adhesion"`
+}
+
+type AdherentCreation struct {
+    Email             string `json:"email"`
+    MotDePasse        string `json:"mot_de_passe"`
+    Nom               string `json:"nom"`
+    Prenom            string `json:"prenom"`
+    Telephone         string `json:"telephone"`
+    Adresse           string `json:"adresse"`
+    DateDebutAdhesion string `json:"date_debut_adhesion"`
+    DateFinAdhesion   string `json:"date_fin_adhesion"`
+}
+
+type LoginRequest struct {
+    Email      string `json:"email"`
+    MotDePasse string `json:"mot_de_passe"`
+}

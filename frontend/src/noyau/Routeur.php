@@ -3,28 +3,27 @@
 class Routeur
 {
     private array $routes = [];
-    
+
     public function __construct()
     {
         $this->initialiserRoutes();
     }
-    
+
     private function initialiserRoutes(): void
     {
-        // Routes frontoffice
         $this->ajouterRoute('GET', '/', 'AccueilControleur', 'index');
-        $this->ajouterRoute('GET', '/services', 'ServiceControleur', 'index');
+        $this->ajouterRoute('GET', '/services', 'ServicesPublicControleur', 'index');
         $this->ajouterRoute('GET', '/adherer', 'AdhesionControleur', 'index');
-        
-        // Routes backoffice - Authentification
+        $this->ajouterRoute('POST', '/adherer', 'AdhesionControleur', 'enregistrer');
+
+        $this->ajouterRoute('GET', '/lang/{code}', 'LangControleur', 'changer');
+
         $this->ajouterRoute('GET', '/admin', 'AuthControleur', 'login');
         $this->ajouterRoute('POST', '/admin/login', 'AuthControleur', 'authentifier');
         $this->ajouterRoute('GET', '/admin/logout', 'AuthControleur', 'deconnecter');
-        
-        // Routes backoffice - Dashboard
+
         $this->ajouterRoute('GET', '/admin/dashboard', 'DashboardControleur', 'index');
-        
-        // Routes backoffice - Commerçants
+
         $this->ajouterRoute('GET', '/admin/commercants', 'CommercantControleur', 'index');
         $this->ajouterRoute('GET', '/admin/commercants/creer', 'CommercantControleur', 'creer');
         $this->ajouterRoute('POST', '/admin/commercants', 'CommercantControleur', 'enregistrer');
@@ -32,56 +31,84 @@ class Routeur
         $this->ajouterRoute('POST', '/admin/commercants/{id}', 'CommercantControleur', 'mettreAJour');
         $this->ajouterRoute('POST', '/admin/commercants/{id}/supprimer', 'CommercantControleur', 'supprimer');
         $this->ajouterRoute('POST', '/admin/commercants/{id}/renouveler', 'CommercantControleur', 'renouveler');
+
+        $this->ajouterRoute('GET', '/admin/collectes', 'CollecteControleur', 'index');
+        $this->ajouterRoute('GET', '/admin/collectes/creer', 'CollecteControleur', 'creer');
+        $this->ajouterRoute('POST', '/admin/collectes', 'CollecteControleur', 'enregistrer');
+        $this->ajouterRoute('GET', '/admin/collectes/{id}/modifier', 'CollecteControleur', 'modifier');
+        $this->ajouterRoute('POST', '/admin/collectes/{id}', 'CollecteControleur', 'mettreAJour');
+        $this->ajouterRoute('POST', '/admin/collectes/{id}/terminer', 'CollecteControleur', 'terminer');
+        $this->ajouterRoute('POST', '/admin/collectes/{id}/supprimer', 'CollecteControleur', 'supprimer');
+
+        $this->ajouterRoute('GET', '/admin/produits', 'ProduitControleur', 'index');
+        $this->ajouterRoute('GET', '/admin/produits/creer', 'ProduitControleur', 'creer');
+        $this->ajouterRoute('POST', '/admin/produits', 'ProduitControleur', 'enregistrer');
+        $this->ajouterRoute('GET', '/admin/produits/{id}/modifier', 'ProduitControleur', 'modifier');
+        $this->ajouterRoute('POST', '/admin/produits/{id}', 'ProduitControleur', 'mettreAJour');
+        $this->ajouterRoute('POST', '/admin/produits/{id}/supprimer', 'ProduitControleur', 'supprimer');
+
+        $this->ajouterRoute('GET', '/admin/benevoles', 'BenevoleControleur', 'index');
+        $this->ajouterRoute('GET', '/admin/benevoles/creer', 'BenevoleControleur', 'creer');
+        $this->ajouterRoute('POST', '/admin/benevoles', 'BenevoleControleur', 'enregistrer');
+        $this->ajouterRoute('GET', '/admin/benevoles/{id}', 'BenevoleControleur', 'detail');
+        $this->ajouterRoute('POST', '/admin/benevoles/{id}/statut', 'BenevoleControleur', 'changerStatut');
+
+        $this->ajouterRoute('GET', '/admin/tournees', 'TourneeControleur', 'index');
+        $this->ajouterRoute('GET', '/admin/tournees/creer', 'TourneeControleur', 'creer');
+        $this->ajouterRoute('POST', '/admin/tournees', 'TourneeControleur', 'enregistrer');
+        $this->ajouterRoute('GET', '/admin/tournees/{id}', 'TourneeControleur', 'detail');
+        $this->ajouterRoute('POST', '/admin/tournees/{id}/terminer', 'TourneeControleur', 'terminer');
+
+        $this->ajouterRoute('GET', '/admin/services', 'ServicesAdminControleur', 'index');
+        $this->ajouterRoute('GET', '/admin/services/plannings/creer', 'ServicesAdminControleur', 'creerPlanning');
+        $this->ajouterRoute('POST', '/admin/services/plannings', 'ServicesAdminControleur', 'enregistrerPlanning');
     }
-    
+
     private function ajouterRoute(string $methode, string $chemin, string $controleur, string $action): void
     {
         $this->routes[] = [
             'methode' => $methode,
             'chemin' => $chemin,
             'controleur' => $controleur,
-            'action' => $action
+            'action' => $action,
         ];
     }
-    
+
     public function executer(): void
     {
-        // Récupérer l'URL sans le sous-dossier
-        $uri = $_SERVER['REQUEST_URI'];
-        $basePath = '/nomorewaste'; // À ajuster selon ta config
-        
-        // Si l'URI commence par le basePath, on l'enlève
-        if (strpos($uri, $basePath) === 0) {
+        $uri = $_SERVER['REQUEST_URI'] ?? '/';
+        $uri = parse_url($uri, PHP_URL_PATH) ?? '/';
+
+        $basePath = rtrim(parse_url(BASE_URL, PHP_URL_PATH) ?: BASE_URL, '/');
+        if ($basePath !== '' && str_starts_with($uri, $basePath)) {
             $uri = substr($uri, strlen($basePath));
         }
-        
-        // Si l'URI est vide ou juste un slash
+
         if ($uri === '' || $uri === '/') {
             $chemin = '/';
         } else {
             $chemin = '/' . trim($uri, '/');
         }
-        
+
         $methode = $_SERVER['REQUEST_METHOD'];
-        
+
         foreach ($this->routes as $route) {
             if ($route['methode'] !== $methode) {
                 continue;
             }
-            
-            $pattern = preg_replace('/\{[a-z]+\}/', '([0-9]+)', $route['chemin']);
+
+            $pattern = preg_replace('/\{[a-z]+\}/', '([^/]+)', $route['chemin']);
             if (preg_match('#^' . $pattern . '$#', $chemin, $matches)) {
                 array_shift($matches);
-                
+
                 $classeControleur = $route['controleur'];
                 $action = $route['action'];
-                
                 $fichierControleur = __DIR__ . '/../controleurs/' . $classeControleur . '.php';
+
                 if (file_exists($fichierControleur)) {
                     require_once $fichierControleur;
                     if (class_exists($classeControleur)) {
                         $controleur = new $classeControleur();
-                        
                         if (!empty($matches)) {
                             call_user_func_array([$controleur, $action], $matches);
                         } else {
@@ -92,9 +119,8 @@ class Routeur
                 }
             }
         }
-        
-        // Page 404
+
         http_response_code(404);
-        echo "<h1>404 - Page non trouvée</h1>";
+        echo '<h1>404 - Page non trouvée</h1><p><a href="' . htmlspecialchars(url('/')) . '">Accueil</a></p>';
     }
 }

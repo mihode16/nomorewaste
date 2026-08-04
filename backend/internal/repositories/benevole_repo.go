@@ -1,0 +1,156 @@
+package repositories
+
+import (
+	"database/sql"
+
+	"nomorewaste/internal/modeles"
+)
+
+type BenevoleRepository struct {
+	db *sql.DB
+}
+
+func NouveauBenevoleRepository(db *sql.DB) *BenevoleRepository {
+	return &BenevoleRepository{db: db}
+}
+
+func (r *BenevoleRepository) Creer(b *modeles.BenevoleCreation) (int, error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	result, err := tx.Exec(`
+		INSERT INTO utilisateur (email, mot_de_passe, nom, prenom, telephone, adresse, type_utilisateur)
+		VALUES (?, ?, ?, ?, ?, ?, 'benevole')
+	`, b.Email, b.MotDePasse, b.Nom, b.Prenom, b.Telephone, b.Adresse)
+	if err != nil {
+		return 0, err
+	}
+	id, _ := result.LastInsertId()
+
+	_, err = tx.Exec(`INSERT INTO benevole (id, statut_candidature) VALUES (?, 'En attente')`, id)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, cid := range b.Competences {
+		if _, err = tx.Exec(`INSERT INTO benevole_competence (benevole_id, competence_id) VALUES (?, ?)`, id, cid); err != nil {
+			return 0, err
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+	return int(id), nil
+}
+
+func (r *BenevoleRepository) TrouverTous() ([]modeles.Benevole, error) {
+	rows, err := r.db.Query(`
+		SELECT u.id, u.email, u.nom, u.prenom, u.telephone, u.adresse, u.date_inscription, u.est_actif,
+		       b.date_candidature, b.statut_candidature
+		FROM utilisateur u
+		JOIN benevole b ON u.id = b.id
+		WHERE u.est_actif = 1
+		ORDER BY b.date_candidature DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []modeles.Benevole
+	for rows.Next() {
+		var b modeles.Benevole
+		if err := rows.Scan(&b.ID, &b.Email, &b.Nom, &b.Prenom, &b.Telephone, &b.Adresse, &b.DateInscription, &b.EstActif, &b.DateCandidature, &b.StatutCandidature); err != nil {
+			return nil, err
+		}
+		b.Competences, _ = r.competencesPour(int(b.ID))
+		list = append(list, b)
+	}
+	return list, nil
+}
+
+func (r *BenevoleRepository) competencesPour(benevoleID int) ([]modeles.Competence, error) {
+	rows, err := r.db.Query(`
+		SELECT c.id, c.nom, c.description FROM competence c
+		JOIN benevole_competence bc ON bc.competence_id = c.id
+		WHERE bc.benevole_id = ?
+	`, benevoleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var comps []modeles.Competence
+	for rows.Next() {
+		var c modeles.Competence
+		if err := rows.Scan(&c.ID, &c.Nom, &c.Description); err != nil {
+			return nil, err
+		}
+		comps = append(comps, c)
+	}
+	return comps, nil
+}
+
+func (r *BenevoleRepository) TrouverParID(id int) (*modeles.Benevole, error) {
+	var b modeles.Benevole
+	err := r.db.QueryRow(`
+		SELECT u.id, u.email, u.nom, u.prenom, u.telephone, u.adresse, u.date_inscription, u.est_actif,
+		       bv.date_candidature, bv.statut_candidature
+		FROM utilisateur u
+		JOIN benevole bv ON u.id = bv.id
+		WHERE u.id = ?
+	`, id).Scan(&b.ID, &b.Email, &b.Nom, &b.Prenom, &b.Telephone, &b.Adresse, &b.DateInscription, &b.EstActif, &b.DateCandidature, &b.StatutCandidature)
+	if err != nil {
+		return nil, err
+	}
+	b.Competences, _ = r.competencesPour(id)
+	return &b, nil
+}
+
+func (r *BenevoleRepository) ChangerStatut(id int, statut string) error {
+	_, err := r.db.Exec(`UPDATE benevole SET statut_candidature = ? WHERE id = ?`, statut, id)
+	return err
+}
+
+func (r *BenevoleRepository) ListerCompetences() ([]modeles.Competence, error) {
+	rows, err := r.db.Query(`SELECT id, nom, description FROM competence ORDER BY nom`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []modeles.Competence
+	for rows.Next() {
+		var c modeles.Competence
+		if err := rows.Scan(&c.ID, &c.Nom, &c.Description); err != nil {
+			return nil, err
+		}
+		list = append(list, c)
+	}
+	return list, nil
+}
+
+func (r *BenevoleRepository) TrouverValides() ([]modeles.Benevole, error) {
+	rows, err := r.db.Query(`
+		SELECT u.id, u.email, u.nom, u.prenom, u.telephone, u.adresse, u.date_inscription, u.est_actif,
+		       b.date_candidature, b.statut_candidature
+		FROM utilisateur u
+		JOIN benevole b ON u.id = b.id
+		WHERE u.est_actif = 1 AND b.statut_candidature = 'Validé'
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []modeles.Benevole
+	for rows.Next() {
+		var b modeles.Benevole
+		if err := rows.Scan(&b.ID, &b.Email, &b.Nom, &b.Prenom, &b.Telephone, &b.Adresse, &b.DateInscription, &b.EstActif, &b.DateCandidature, &b.StatutCandidature); err != nil {
+			return nil, err
+		}
+		list = append(list, b)
+	}
+	return list, nil
+}

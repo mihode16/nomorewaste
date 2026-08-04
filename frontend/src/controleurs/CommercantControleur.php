@@ -25,6 +25,7 @@ class CommercantControleur extends Controleur
         
         $this->rendre('backoffice/commercants/index', [
             'titre' => 'Gestion des commerçants',
+            'pageActive' => 'commercants',
             'commercants' => $commercants
         ]);
     }
@@ -37,7 +38,8 @@ class CommercantControleur extends Controleur
         $this->verifierAuthentification();
         
         $this->rendre('backoffice/commercants/creer', [
-            'titre' => 'Nouveau commerçant'
+            'titre' => 'Nouveau commerçant',
+            'pageActive' => 'commercants',
         ]);
     }
     
@@ -108,6 +110,7 @@ class CommercantControleur extends Controleur
         
         $this->rendre('backoffice/commercants/modifier', [
             'titre' => 'Modifier un commerçant',
+            'pageActive' => 'commercants',
             'commercant' => $response['data']
         ]);
     }

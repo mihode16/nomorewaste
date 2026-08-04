@@ -3,46 +3,40 @@
 class ClientApi
 {
     private string $baseUrl;
-    
 
-    
     public function __construct()
     {
-        // Si l'API est sur Docker (localhost:8080)
-        $this->baseUrl = 'http://localhost:8081';
-        
-        // En production, utiliser une variable d'environnement
-        // $this->baseUrl = getenv('API_URL') ?: 'http://localhost:8080';
+        // Par défaut, l'API Go tourne sur le port 8081
+        // On peut surcharger avec la variable d'environnement API_URL
+        $this->baseUrl = getenv('API_URL') ?: 'http://localhost:8081';
     }
-    
 
-    
     public function get(string $endpoint, array $params = []): array
     {
         $url = $this->baseUrl . $endpoint;
         if (!empty($params)) {
             $url .= '?' . http_build_query($params);
         }
-        
+
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        
+
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        
+
         return [
             'code' => $httpCode,
             'data' => json_decode($response, true)
         ];
     }
-    
+
     public function post(string $endpoint, array $data): array
     {
         $url = $this->baseUrl . $endpoint;
         $jsonData = json_encode($data);
-        
+
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
@@ -51,22 +45,22 @@ class ClientApi
             'Content-Type: application/json',
             'Content-Length: ' . strlen($jsonData)
         ]);
-        
+
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        
+
         return [
             'code' => $httpCode,
             'data' => json_decode($response, true)
         ];
     }
-    
+
     public function put(string $endpoint, array $data): array
     {
         $url = $this->baseUrl . $endpoint;
         $jsonData = json_encode($data);
-        
+
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
@@ -75,30 +69,30 @@ class ClientApi
             'Content-Type: application/json',
             'Content-Length: ' . strlen($jsonData)
         ]);
-        
+
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        
+
         return [
             'code' => $httpCode,
             'data' => json_decode($response, true)
         ];
     }
-    
+
     public function delete(string $endpoint): array
     {
         $url = $this->baseUrl . $endpoint;
-        
+
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        
+
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        
+
         return [
             'code' => $httpCode,
             'data' => json_decode($response, true)
