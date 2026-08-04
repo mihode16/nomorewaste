@@ -54,4 +54,4 @@
     </div>
 </div>
 
-<?php include __DIR__ . '/../../layouts/pied.php'; ?>
+<?php include __DIR__ . '/../../layouts/pied.php'; ?>c
