@@ -32,11 +32,14 @@ class Routeur
         $this->ajouterRoute('GET', '/admin/commercants/{id}/modifier', 'CommercantControleur', 'modifier');
         $this->ajouterRoute('POST', '/admin/commercants/{id}', 'CommercantControleur', 'mettreAJour');
         $this->ajouterRoute('POST', '/admin/commercants/{id}/supprimer', 'CommercantControleur', 'supprimer');
+        $this->ajouterRoute('POST', '/admin/commercants/{id}/valider', 'CommercantControleur', 'valider');
+        $this->ajouterRoute('POST', '/admin/commercants/{id}/demander-renouvellement', 'CommercantControleur', 'demanderRenouvellement');
         $this->ajouterRoute('POST', '/admin/commercants/{id}/renouveler', 'CommercantControleur', 'renouveler');
 
         $this->ajouterRoute('GET', '/admin/collectes', 'CollecteControleur', 'index');
         $this->ajouterRoute('GET', '/admin/collectes/creer', 'CollecteControleur', 'creer');
         $this->ajouterRoute('POST', '/admin/collectes', 'CollecteControleur', 'enregistrer');
+        $this->ajouterRoute('POST', '/admin/collectes/{id}/valider', 'CollecteControleur', 'valider');
         $this->ajouterRoute('GET', '/admin/collectes/{id}/modifier', 'CollecteControleur', 'modifier');
         $this->ajouterRoute('POST', '/admin/collectes/{id}', 'CollecteControleur', 'mettreAJour');
         $this->ajouterRoute('POST', '/admin/collectes/{id}/terminer', 'CollecteControleur', 'terminer');

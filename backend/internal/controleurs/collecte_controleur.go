@@ -70,6 +70,24 @@ func (c *CollecteControleur) TrouverParID(w http.ResponseWriter, r *http.Request
     json.NewEncoder(w).Encode(collecte)
 }
 
+func (c *CollecteControleur) Valider(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    idStr := vars["id"]
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "ID invalide", http.StatusBadRequest)
+        return
+    }
+
+    if err := c.service.ValiderCollecte(id); err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{"message": "Collecte validée avec succès"})
+}
+
 func (c *CollecteControleur) MettreAJour(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     idStr := vars["id"]

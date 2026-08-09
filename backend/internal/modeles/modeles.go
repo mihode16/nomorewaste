@@ -32,6 +32,8 @@ type Commercant struct {
     DateDebutAdhesion         time.Time `json:"date_debut_adhesion"`
     DateFinAdhesion           time.Time `json:"date_fin_adhesion"`
     EstRenouveleAutomatiquement bool    `json:"est_renouvele_automatiquement"`
+    StatutAdhesion            string    `json:"statut_adhesion"`
+    DemandeRenouvellement     bool      `json:"demande_renouvellement"` // AJOUT
 }
 
 type CommercantCreation struct {
@@ -47,6 +49,7 @@ type CommercantCreation struct {
     DateDebutAdhesion string `json:"date_debut_adhesion"`
     DateFinAdhesion   string `json:"date_fin_adhesion"`
     EstRenouveleAutomatiquement bool `json:"est_renouvele_automatiquement"`
+    // StatutAdhesion n'est pas requis car il sera défini par défaut en 'en_attente'
 }
 
 // ============================================================
@@ -99,13 +102,14 @@ type Disponibilite struct {
 // COLLECTE
 // ============================================================
 type Collecte struct {
-    ID              int       `json:"id"`
+    ID              int        `json:"id"`
     DateHeureCollecte time.Time `json:"date_heure_collecte"`
-    AdresseCollecte string    `json:"adresse_collecte"`
-    Statut          string    `json:"statut"`
-    Commentaire     string    `json:"commentaire"`
-    CommercantID    int       `json:"commercant_id"`
+    AdresseCollecte string     `json:"adresse_collecte"`
+    Statut          string     `json:"statut"`
+    Commentaire     string     `json:"commentaire"`
+    CommercantID    int        `json:"commercant_id"`
     Commercant      *Commercant `json:"commercant,omitempty"`
+    Validee         bool       `json:"validee"` // Ajout
 }
 
 type CollecteCreation struct {
@@ -113,6 +117,7 @@ type CollecteCreation struct {
     AdresseCollecte   string `json:"adresse_collecte"`
     CommercantID      int    `json:"commercant_id"`
     Commentaire       string `json:"commentaire"`
+    // Validee non demandé, sera mis à 0 par défaut
 }
 
 // ============================================================

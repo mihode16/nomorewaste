@@ -57,6 +57,27 @@ class CollecteControleur extends Controleur
         $this->rediriger('/admin/collectes');
     }
 
+    public function valider(int $id): void
+    {
+        $this->verifierAuthentification();
+
+        if (!$this->estPost()) {
+            $this->rediriger('/admin/collectes');
+            return;
+        }
+
+        $response = $this->apiClient->post('/api/collectes/' . $id . '/valider', []);
+
+        if ($response['code'] === 200) {
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Collecte validée avec succès'];
+        } else {
+            $erreur = $response['data']['error'] ?? 'Erreur lors de la validation';
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreur : ' . $erreur];
+        }
+
+        $this->rediriger('/admin/collectes');
+    }
+
     public function modifier(int $id): void
     {
         $this->verifierAuthentification();

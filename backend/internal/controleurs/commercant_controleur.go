@@ -2,8 +2,10 @@ package controleurs
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -22,12 +24,16 @@ func NouveauCommercantControleur(service *services.CommercantService) *Commercan
 func (c *CommercantControleur) Creer(w http.ResponseWriter, r *http.Request) {
     var req modeles.CommercantCreation
     if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        log.Printf("❌ Erreur de décodage JSON: %v", err)
         http.Error(w, "Requête invalide", http.StatusBadRequest)
         return
     }
 
+    log.Printf("📝 Création d'un commerçant: email=%s, raison_sociale=%s", req.Email, req.RaisonSociale)
+
     id, err := c.service.Creer(&req)
     if err != nil {
+        log.Printf("❌ Erreur création commerçant: %v", err)
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }
@@ -79,22 +85,100 @@ func (c *CommercantControleur) MettreAJour(w http.ResponseWriter, r *http.Reques
         return
     }
 
-    var req modeles.Commercant
+    // Structure temporaire avec des dates en string
+    var req struct {
+        Nom                         string `json:"nom"`
+        Prenom                      string `json:"prenom"`
+        Telephone                   string `json:"telephone"`
+        Adresse                     string `json:"adresse"`
+        Siret                       string `json:"siret"`
+        RaisonSociale               string `json:"raison_sociale"`
+        TypeCommerce                string `json:"type_commerce"`
+        DateDebutAdhesion           string `json:"date_debut_adhesion"`
+        DateFinAdhesion             string `json:"date_fin_adhesion"`
+        EstRenouveleAutomatiquement bool   `json:"est_renouvele_automatiquement"`
+    }
+
     if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        log.Printf("❌ Erreur de décodage JSON: %v", err)
         http.Error(w, "Requête invalide", http.StatusBadRequest)
         return
     }
-    req.ID = id
 
-    if err := c.service.MettreAJour(&req); err != nil {
+    // Conversion des dates (format YYYY-MM-DD)
+    dateDebut, err := time.Parse("2006-01-02", req.DateDebutAdhesion)
+    if err != nil {
+        http.Error(w, "Date de début invalide", http.StatusBadRequest)
+        return
+    }
+    dateFin, err := time.Parse("2006-01-02", req.DateFinAdhesion)
+    if err != nil {
+        http.Error(w, "Date de fin invalide", http.StatusBadRequest)
+        return
+    }
+
+    // Construction de l'objet commerçant
+    commercant := modeles.Commercant{
+        Utilisateur: modeles.Utilisateur{
+            ID:        id,
+            Nom:       req.Nom,
+            Prenom:    req.Prenom,
+            Telephone: req.Telephone,
+            Adresse:   req.Adresse,
+        },
+        Siret:                         req.Siret,
+        RaisonSociale:                 req.RaisonSociale,
+        TypeCommerce:                  req.TypeCommerce,
+        DateDebutAdhesion:             dateDebut,
+        DateFinAdhesion:               dateFin,
+        EstRenouveleAutomatiquement:   req.EstRenouveleAutomatiquement,
+        // StatutAdhesion n'est pas modifié
+    }
+
+    if err := c.service.MettreAJour(&commercant); err != nil {
+        log.Printf("❌ Erreur mise à jour commerçant %d: %v", id, err)
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }
 
     w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(map[string]string{
-        "message": "Commerçant mis à jour avec succès",
-    })
+    json.NewEncoder(w).Encode(map[string]string{"message": "Commerçant mis à jour avec succès"})
+}
+
+func (c *CommercantControleur) Valider(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    idStr := vars["id"]
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "ID invalide", http.StatusBadRequest)
+        return
+    }
+
+    if err := c.service.ValiderAdhesion(id); err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{"message": "Adhésion validée"})
+}
+
+func (c *CommercantControleur) DemanderRenouvellement(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    idStr := vars["id"]
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "ID invalide", http.StatusBadRequest)
+        return
+    }
+
+    if err := c.service.DemanderRenouvellement(id); err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{"message": "Demande de renouvellement enregistrée"})
 }
 
 func (c *CommercantControleur) RenouvelerAdhesion(w http.ResponseWriter, r *http.Request) {

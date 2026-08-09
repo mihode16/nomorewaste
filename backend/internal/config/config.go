@@ -28,7 +28,7 @@ func ChargerConfig() *Config {
         DBUser:     getEnv("DB_USER", "root"),
         DBPassword: getEnv("DB_PASSWORD", "root"),
         DBName:     getEnv("DB_NAME", "nomorewaste"),
-        APIPort:    getEnv("API_PORT", "8080"),
+        APIPort:    getEnv("API_PORT", "8081"),
     }
 }
 

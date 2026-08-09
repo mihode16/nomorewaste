@@ -71,6 +71,8 @@ class CommercantControleur extends Controleur
             'est_renouvele_automatiquement' => (bool)$this->getParam('est_renouvele_automatiquement', false)
         ];
         
+         error_log(json_encode($data));
+
         // Envoyer à l'API
         $response = $this->apiClient->post('/api/commercants', $data);
         
@@ -186,6 +188,48 @@ class CommercantControleur extends Controleur
         
         $this->rediriger('/admin/commercants');
     }
+
+    public function valider(int $id): void
+    {
+        $this->verifierAuthentification();
+
+        if (!$this->estPost()) {
+            $this->rediriger('/admin/commercants');
+            return;
+        }
+
+        $response = $this->apiClient->post('/api/commercants/' . $id . '/valider', []);
+
+        if ($response['code'] === 200) {
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Adhésion validée avec succès'];
+        } else {
+            $erreur = $response['data']['error'] ?? 'Erreur lors de la validation';
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreur : ' . $erreur];
+        }
+
+        $this->rediriger('/admin/commercants');
+    }
+
+    public function demanderRenouvellement(int $id): void
+{
+    $this->verifierAuthentification();
+
+    if (!$this->estPost()) {
+        $this->rediriger('/admin/commercants');
+        return;
+    }
+
+    $response = $this->apiClient->post('/api/commercants/' . $id . '/demander-renouvellement', []);
+
+    if ($response['code'] === 200) {
+        $_SESSION['flash'] = ['type' => 'success', 'message' => 'Demande de renouvellement enregistrée'];
+    } else {
+        $erreur = $response['data']['error'] ?? 'Erreur lors de la demande';
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreur : ' . $erreur];
+    }
+
+    $this->rediriger('/admin/commercants');
+}
     
     /**
      * Renouveler l'adhésion d'un commerçant

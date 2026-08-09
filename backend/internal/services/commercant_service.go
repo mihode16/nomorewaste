@@ -17,7 +17,6 @@ func NouveauCommercantService(repo *repositories.CommercantRepository) *Commerca
 }
 
 func (s *CommercantService) Creer(commercant *modeles.CommercantCreation) (int, error) {
-    // Validation
     if commercant.Email == "" {
         return 0, errors.New("l'email est requis")
     }
@@ -27,8 +26,10 @@ func (s *CommercantService) Creer(commercant *modeles.CommercantCreation) (int, 
     if commercant.Siret == "" {
         return 0, errors.New("le SIRET est requis")
     }
-
-    // TODO: Vérifier si l'email existe déjà
+    // Ajoutez aussi la vérification de la raison sociale ?
+    if commercant.RaisonSociale == "" {
+        return 0, errors.New("la raison sociale est requise")
+    }
 
     return s.repo.Creer(commercant)
 }
@@ -52,6 +53,24 @@ func (s *CommercantService) MettreAJour(commercant *modeles.Commercant) error {
     }
 
     return s.repo.MettreAJour(commercant)
+}
+
+func (s *CommercantService) ValiderAdhesion(id int) error {
+    // Vérifier l'existence
+    _, err := s.repo.TrouverParID(id)
+    if err != nil {
+        return errors.New("commerçant non trouvé")
+    }
+    return s.repo.ValiderAdhesion(id)
+}
+
+func (s *CommercantService) DemanderRenouvellement(id int) error {
+    // Vérifier l'existence
+    _, err := s.repo.TrouverParID(id)
+    if err != nil {
+        return errors.New("commerçant non trouvé")
+    }
+    return s.repo.DemanderRenouvellement(id)
 }
 
 func (s *CommercantService) RenouvelerAdhesion(id int, dureeMois int) error {

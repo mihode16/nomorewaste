@@ -38,6 +38,14 @@ func (s *CollecteService) TrouverParID(id int) (*modeles.Collecte, error) {
     return s.repo.TrouverParID(id)
 }
 
+func (s *CollecteService) ValiderCollecte(id int) error {
+    existant, err := s.repo.TrouverParID(id)
+    if err != nil || existant == nil {
+        return errors.New("collecte non trouvée")
+    }
+    return s.repo.ValiderCollecte(id)
+}
+
 func (s *CollecteService) MettreAJour(collecte *modeles.Collecte) error {
     existant, err := s.repo.TrouverParID(collecte.ID)
     if err != nil || existant == nil {

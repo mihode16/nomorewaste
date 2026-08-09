@@ -20,9 +20,9 @@ $pageActive = $pageActive ?? '';
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-2 sidebar p-0">
-            <div class="p-3">
-                <h4 class="text-white">NO MORE WASTE</h4>
-                <hr class="border-light">
+            <div class="p-3 d-flex align-items-center">
+                <img src="/nomorewaste/assets/logo.png" style="height:55px; object-fit:cover; border-radius: 11px; margin-right:10px;">
+                <h4 class="text-white mb-0">NO MORE WASTE</h4>
             </div>
             <nav class="nav flex-column">
                 <a href="<?php echo url('/admin/dashboard'); ?>" class="nav-link <?php echo $pageActive === 'dashboard' ? 'active' : ''; ?>">

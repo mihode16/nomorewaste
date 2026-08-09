@@ -14,15 +14,15 @@ func NouveauCollecteRepository(db *sql.DB) *CollecteRepository {
 }
 
 func (r *CollecteRepository) Creer(collecte *modeles.CollecteCreation) (int, error) {
-	dateHeure, err := parseDateTime(collecte.DateHeureCollecte)
-	if err != nil {
-		return 0, err
-	}
+    dateHeure, err := parseDateTime(collecte.DateHeureCollecte)
+    if err != nil {
+        return 0, err
+    }
 
-	result, err := r.db.Exec(`
-		INSERT INTO collecte (date_heure_collecte, adresse_collecte, commentaire, commercant_id)
-		VALUES (?, ?, ?, ?)
-	`, dateHeure, collecte.AdresseCollecte, collecte.Commentaire, collecte.CommercantID)
+    result, err := r.db.Exec(`
+        INSERT INTO collecte (date_heure_collecte, adresse_collecte, commentaire, commercant_id, validee)
+        VALUES (?, ?, ?, ?, ?)
+    `, dateHeure, collecte.AdresseCollecte, collecte.Commentaire, collecte.CommercantID, 0)
 	if err != nil {
 		return 0, err
 	}
@@ -36,10 +36,10 @@ func (r *CollecteRepository) Creer(collecte *modeles.CollecteCreation) (int, err
 }
 
 func (r *CollecteRepository) TrouverTous() ([]modeles.Collecte, error) {
-	rows, err := r.db.Query(`
-		SELECT c.id, c.date_heure_collecte, c.adresse_collecte, c.statut, c.commentaire, c.commercant_id,
-		       u.id, u.email, u.nom, u.prenom, u.telephone, u.adresse, u.date_inscription, u.est_actif,
-		       cm.siret, cm.raison_sociale, cm.type_commerce, cm.date_debut_adhesion, cm.date_fin_adhesion, cm.est_renouvele_automatiquement
+	rows, err := r.db.Query( `
+		SELECT c.id, c.date_heure_collecte, c.adresse_collecte, c.statut, c.commentaire, c.commercant_id, c.validee,
+			u.id, u.email, u.nom, u.prenom, u.telephone, u.adresse, u.date_inscription, u.est_actif,
+			cm.siret, cm.raison_sociale, cm.type_commerce, cm.date_debut_adhesion, cm.date_fin_adhesion, cm.est_renouvele_automatiquement
 		FROM collecte c
 		LEFT JOIN commercant cm ON c.commercant_id = cm.id
 		LEFT JOIN utilisateur u ON cm.id = u.id
@@ -62,7 +62,7 @@ func (r *CollecteRepository) TrouverTous() ([]modeles.Collecte, error) {
 		var siret, raisonSociale, typeCommerce sql.NullString
 
 		err := rows.Scan(
-			&c.ID, &c.DateHeureCollecte, &c.AdresseCollecte, &c.Statut, &commentaire, &c.CommercantID,
+			&c.ID, &c.DateHeureCollecte, &c.AdresseCollecte, &c.Statut, &commentaire, &c.CommercantID, &c.Validee,
 			&u.ID, &email, &nom, &prenom, &telephone, &adresse, &u.DateInscription, &u.EstActif,
 			&siret, &raisonSociale, &typeCommerce, &cm.DateDebutAdhesion, &cm.DateFinAdhesion, &cm.EstRenouveleAutomatiquement,
 		)
@@ -100,7 +100,7 @@ func (r *CollecteRepository) TrouverParID(id int) (*modeles.Collecte, error) {
 	var siret, raisonSociale, typeCommerce sql.NullString
 
 	err := r.db.QueryRow(`
-		SELECT c.id, c.date_heure_collecte, c.adresse_collecte, c.statut, c.commentaire, c.commercant_id,
+		SELECT c.id, c.date_heure_collecte, c.adresse_collecte, c.statut, c.commentaire, c.commercant_id, c.validee,
 		       u.id, u.email, u.nom, u.prenom, u.telephone, u.adresse, u.date_inscription, u.est_actif,
 		       cm.siret, cm.raison_sociale, cm.type_commerce, cm.date_debut_adhesion, cm.date_fin_adhesion, cm.est_renouvele_automatiquement
 		FROM collecte c
@@ -108,7 +108,7 @@ func (r *CollecteRepository) TrouverParID(id int) (*modeles.Collecte, error) {
 		LEFT JOIN utilisateur u ON cm.id = u.id
 		WHERE c.id = ?
 	`, id).Scan(
-		&c.ID, &c.DateHeureCollecte, &c.AdresseCollecte, &c.Statut, &commentaire, &c.CommercantID,
+		&c.ID, &c.DateHeureCollecte, &c.AdresseCollecte, &c.Statut, &commentaire, &c.CommercantID, &c.Validee,
 		&u.ID, &email, &nom, &prenom, &telephone, &adresse, &u.DateInscription, &u.EstActif,
 		&siret, &raisonSociale, &typeCommerce, &cm.DateDebutAdhesion, &cm.DateFinAdhesion, &cm.EstRenouveleAutomatiquement,
 	)
@@ -146,6 +146,11 @@ func (r *CollecteRepository) MettreAJourStatut(id int, statut string) error {
 		UPDATE collecte SET statut = ? WHERE id = ?
 	`, statut, id)
 	return err
+}
+
+func (r *CollecteRepository) ValiderCollecte(id int) error {
+    _, err := r.db.Exec(`UPDATE collecte SET validee = 1 WHERE id = ?`, id)
+    return err
 }
 
 func (r *CollecteRepository) Supprimer(id int) error {
