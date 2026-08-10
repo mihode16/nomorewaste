@@ -3,7 +3,7 @@
 class Routeur
 {
     private array $routes = [];
-    private string $basePath; 
+    private string $basePath;
 
     public function __construct()
     {
@@ -13,38 +13,45 @@ class Routeur
 
     private function initialiserRoutes(): void
     {
+        // Front office
         $this->ajouterRoute('GET', '/', 'AccueilControleur', 'index');
         $this->ajouterRoute('GET', '/services', 'ServicesPublicControleur', 'index');
         $this->ajouterRoute('GET', '/adherer', 'AdhesionControleur', 'index');
         $this->ajouterRoute('POST', '/adherer', 'AdhesionControleur', 'enregistrer');
-
         $this->ajouterRoute('GET', '/lang/{code}', 'LangControleur', 'changer');
 
+        // Authentification
         $this->ajouterRoute('GET', '/admin', 'AuthControleur', 'login');
         $this->ajouterRoute('POST', '/admin/login', 'AuthControleur', 'authentifier');
         $this->ajouterRoute('GET', '/admin/logout', 'AuthControleur', 'deconnecter');
 
+        // Backoffice
         $this->ajouterRoute('GET', '/admin/dashboard', 'DashboardControleur', 'index');
 
+        // Commerçants
         $this->ajouterRoute('GET', '/admin/commercants', 'CommercantControleur', 'index');
         $this->ajouterRoute('GET', '/admin/commercants/creer', 'CommercantControleur', 'creer');
         $this->ajouterRoute('POST', '/admin/commercants', 'CommercantControleur', 'enregistrer');
         $this->ajouterRoute('GET', '/admin/commercants/{id}/modifier', 'CommercantControleur', 'modifier');
         $this->ajouterRoute('POST', '/admin/commercants/{id}', 'CommercantControleur', 'mettreAJour');
         $this->ajouterRoute('POST', '/admin/commercants/{id}/supprimer', 'CommercantControleur', 'supprimer');
-        $this->ajouterRoute('POST', '/admin/commercants/{id}/valider', 'CommercantControleur', 'valider');
-        $this->ajouterRoute('POST', '/admin/commercants/{id}/demander-renouvellement', 'CommercantControleur', 'demanderRenouvellement');
         $this->ajouterRoute('POST', '/admin/commercants/{id}/renouveler', 'CommercantControleur', 'renouveler');
+        $this->ajouterRoute('POST', '/admin/commercants/{id}/valider', 'CommercantControleur', 'valider');
 
+        // Collectes
         $this->ajouterRoute('GET', '/admin/collectes', 'CollecteControleur', 'index');
         $this->ajouterRoute('GET', '/admin/collectes/creer', 'CollecteControleur', 'creer');
         $this->ajouterRoute('POST', '/admin/collectes', 'CollecteControleur', 'enregistrer');
-        $this->ajouterRoute('POST', '/admin/collectes/{id}/valider', 'CollecteControleur', 'valider');
         $this->ajouterRoute('GET', '/admin/collectes/{id}/modifier', 'CollecteControleur', 'modifier');
         $this->ajouterRoute('POST', '/admin/collectes/{id}', 'CollecteControleur', 'mettreAJour');
         $this->ajouterRoute('POST', '/admin/collectes/{id}/terminer', 'CollecteControleur', 'terminer');
         $this->ajouterRoute('POST', '/admin/collectes/{id}/supprimer', 'CollecteControleur', 'supprimer');
+        $this->ajouterRoute('POST', '/admin/collectes/{id}/valider', 'CollecteControleur', 'valider');
+        $this->ajouterRoute('GET', '/admin/collectes/{id}', 'CollecteControleur', 'detail');
+        $this->ajouterRoute('GET', '/admin/collectes/{id}/benevoles', 'CollecteControleur', 'gererBenevoles');
+        $this->ajouterRoute('POST', '/admin/collectes/{id}/benevoles', 'CollecteControleur', 'ajouterBenevole');
 
+        // Produits
         $this->ajouterRoute('GET', '/admin/produits', 'ProduitControleur', 'index');
         $this->ajouterRoute('GET', '/admin/produits/creer', 'ProduitControleur', 'creer');
         $this->ajouterRoute('POST', '/admin/produits', 'ProduitControleur', 'enregistrer');
@@ -52,22 +59,27 @@ class Routeur
         $this->ajouterRoute('POST', '/admin/produits/{id}', 'ProduitControleur', 'mettreAJour');
         $this->ajouterRoute('POST', '/admin/produits/{id}/supprimer', 'ProduitControleur', 'supprimer');
 
+        // Bénévoles
         $this->ajouterRoute('GET', '/admin/benevoles', 'BenevoleControleur', 'index');
         $this->ajouterRoute('GET', '/admin/benevoles/creer', 'BenevoleControleur', 'creer');
         $this->ajouterRoute('POST', '/admin/benevoles', 'BenevoleControleur', 'enregistrer');
         $this->ajouterRoute('GET', '/admin/benevoles/{id}', 'BenevoleControleur', 'detail');
         $this->ajouterRoute('POST', '/admin/benevoles/{id}/statut', 'BenevoleControleur', 'changerStatut');
 
+        // Tournées
         $this->ajouterRoute('GET', '/admin/tournees', 'TourneeControleur', 'index');
         $this->ajouterRoute('GET', '/admin/tournees/creer', 'TourneeControleur', 'creer');
         $this->ajouterRoute('POST', '/admin/tournees', 'TourneeControleur', 'enregistrer');
         $this->ajouterRoute('GET', '/admin/tournees/{id}', 'TourneeControleur', 'detail');
         $this->ajouterRoute('POST', '/admin/tournees/{id}/terminer', 'TourneeControleur', 'terminer');
 
+        // Services
         $this->ajouterRoute('GET', '/admin/services', 'ServicesAdminControleur', 'index');
         $this->ajouterRoute('GET', '/admin/services/plannings/creer', 'ServicesAdminControleur', 'creerPlanning');
         $this->ajouterRoute('POST', '/admin/services/plannings', 'ServicesAdminControleur', 'enregistrerPlanning');
-    }
+
+        // Code-barres
+        $this->ajouterRoute('GET', '/barcode/{code}.svg', 'BarcodeControleur', 'generer');    }
 
     private function ajouterRoute(string $methode, string $chemin, string $controleur, string $action): void
     {

@@ -1,5 +1,3 @@
-<?php include __DIR__ . '/../../layouts/entete.php'; ?>
-
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?php echo htmlspecialchars($titre ?? 'Gestion des collectes'); ?></h2>
     <a href="<?php echo url('/admin/collectes/creer'); ?>" class="btn btn-success">
@@ -7,6 +5,39 @@
     </a>
 </div>
 
+<!-- Barre de recherche et filtres -->
+<form method="GET" action="<?php echo url('/admin/collectes'); ?>" class="row g-2 mb-4 align-items-end">
+    <div class="col-md-3">
+        <input type="text" name="commercant" class="form-control form-control-sm" 
+               placeholder="Rechercher par commerçant..." 
+               value="<?php echo htmlspecialchars($filtre_commercant ?? ''); ?>">
+    </div>
+    <div class="col-md-2">
+        <select name="statut" class="form-select form-select-sm">
+            <option value="">Tous les statuts</option>
+            <option value="Planifiée" <?php echo ($filtre_statut ?? '') === 'Planifiée' ? 'selected' : ''; ?>>Planifiée</option>
+            <option value="Terminée" <?php echo ($filtre_statut ?? '') === 'Terminée' ? 'selected' : ''; ?>>Terminée</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <input type="date" name="date_debut" class="form-control form-control-sm" 
+               value="<?php echo htmlspecialchars($filtre_date_debut ?? ''); ?>">
+    </div>
+    <div class="col-md-2">
+        <input type="date" name="date_fin" class="form-control form-control-sm" 
+               value="<?php echo htmlspecialchars($filtre_date_fin ?? ''); ?>">
+    </div>
+    <div class="col-md-3 d-flex gap-1">
+        <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+            <i class="bi bi-search"></i> Filtrer
+        </button>
+        <a href="<?php echo url('/admin/collectes'); ?>" class="btn btn-secondary btn-sm flex-grow-1">
+            <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+        </a>
+    </div>
+</form>
+
+<!-- Messages flash -->
 <?php if (isset($_SESSION['flash'])): ?>
     <div class="alert alert-<?php echo $_SESSION['flash']['type']; ?> alert-dismissible fade show">
         <?php echo $_SESSION['flash']['message']; ?>
@@ -15,6 +46,7 @@
     <?php unset($_SESSION['flash']); ?>
 <?php endif; ?>
 
+<!-- Tableau des collectes (inchangé) -->
 <div class="card">
     <div class="card-body">
         <div class="table-responsive">
@@ -25,8 +57,8 @@
                         <th>Date / Heure</th>
                         <th>Adresse</th>
                         <th>Commerçant</th>
+                        <th>Validation</th>
                         <th>Statut</th>
-                        <th>Validation</th> <!-- Nouvelle colonne -->
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -48,7 +80,6 @@
                                     }
                                     ?>
                                 </td>
-                                <td><?php echo badge_statut($c['statut'] ?? 'Planifiée'); ?></td>
                                 <td>
                                     <?php if (!empty($c['validee'])): ?>
                                         <span class="badge bg-success">Validée</span>
@@ -57,28 +88,32 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
+                                    <?php
+                                    $statut = $c['statut'] ?? '';
+                                    if ($statut === ''): ?>
+                                        <span class="badge bg-secondary">En attente</span>
+                                    <?php elseif ($statut === 'Planifiée'): ?>
+                                        <span class="badge bg-primary">Planifiée</span>
+                                    <?php elseif ($statut === 'Terminée'): ?>
+                                        <span class="badge bg-success">Terminée</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-light text-dark"><?php echo htmlspecialchars($statut); ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
                                     <div class="btn-group btn-group-sm">
-                                        <?php if (empty($c['validee'])): ?>
+                                        <a href="<?php echo url('/admin/collectes/' . $c['id']); ?>" class="btn btn-info" title="Voir"><i class="bi bi-eye"></i></a>
+                                        <?php if ($c['statut'] === '' && !$c['validee']): ?>
                                             <form method="POST" action="<?php echo url('/admin/collectes/' . $c['id'] . '/valider'); ?>" style="display:inline;">
-                                                <button type="submit" class="btn btn-success" onclick="return confirm('Valider cette collecte ?')" title="Valider">
-                                                    <i class="bi bi-check-circle"></i>
-                                                </button>
+                                                <button type="submit" class="btn btn-success" onclick="return confirm('Valider cette collecte ?')" title="Valider"><i class="bi bi-check-circle"></i></button>
                                             </form>
                                         <?php endif; ?>
-                                        <a href="<?php echo url('/admin/collectes/' . $c['id'] . '/modifier'); ?>" class="btn btn-primary">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <?php if (($c['statut'] ?? '') !== 'Terminée'): ?>
-                                            <form method="POST" action="<?php echo url('/admin/collectes/' . $c['id'] . '/terminer'); ?>" style="display:inline;">
-                                                <button type="submit" class="btn btn-success" onclick="return confirm('Marquer comme terminée ?')">
-                                                    <i class="bi bi-check2"></i>
-                                                </button>
-                                            </form>
+                                        <?php if ($c['statut'] === 'Planifiée'): ?>
+                                            <a href="<?php echo url('/admin/collectes/' . $c['id'] . '/benevoles'); ?>" class="btn btn-warning" title="Gérer bénévoles"><i class="bi bi-people"></i></a>
                                         <?php endif; ?>
-                                        <form method="POST" action="<?php echo url('/admin/collectes/' . $c['id'] . '/supprimer'); ?>" style="display:inline;" onsubmit="return confirm('Confirmer la suppression ?')">
-                                            <button type="submit" class="btn btn-danger">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
+                                        <a href="<?php echo url('/admin/collectes/' . $c['id'] . '/modifier'); ?>" class="btn btn-primary"><i class="bi bi-pencil"></i></a>
+                                        <form method="POST" action="<?php echo url('/admin/collectes/' . $c['id'] . '/supprimer'); ?>" style="display:inline;" onsubmit="return confirm('Supprimer ?')">
+                                            <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i></button>
                                         </form>
                                     </div>
                                 </td>
@@ -90,5 +125,3 @@
         </div>
     </div>
 </div>
-
-<?php include __DIR__ . '/../../layouts/pied.php'; ?>

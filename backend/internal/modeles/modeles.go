@@ -101,15 +101,18 @@ type Disponibilite struct {
 // ============================================================
 // COLLECTE
 // ============================================================
+// Modifiez la structure Collecte existante
 type Collecte struct {
-    ID              int        `json:"id"`
-    DateHeureCollecte time.Time `json:"date_heure_collecte"`
-    AdresseCollecte string     `json:"adresse_collecte"`
-    Statut          string     `json:"statut"`
-    Commentaire     string     `json:"commentaire"`
-    CommercantID    int        `json:"commercant_id"`
-    Commercant      *Commercant `json:"commercant,omitempty"`
-    Validee         bool       `json:"validee"` // Ajout
+    ID                 int        `json:"id"`
+    DateHeureCollecte  time.Time  `json:"date_heure_collecte"`
+    AdresseCollecte    string     `json:"adresse_collecte"`
+    Statut             string     `json:"statut"`          // Peut être "" (en attente), "Planifiée", "Terminée"
+    Commentaire        string     `json:"commentaire"`
+    CommercantID       int        `json:"commercant_id"`
+    Commercant         *Commercant `json:"commercant,omitempty"`
+    Validee            bool       `json:"validee"`
+    NbBenevoles        int        `json:"nb_benevoles"`    // Nombre de bénévoles requis
+    Benevoles          []CollecteBenevole `json:"benevoles,omitempty"`
 }
 
 type CollecteCreation struct {
@@ -119,6 +122,18 @@ type CollecteCreation struct {
     Commentaire       string `json:"commentaire"`
     // Validee non demandé, sera mis à 0 par défaut
 }
+
+type CollecteBenevole struct {
+    ID              int        `json:"id"`
+    CollecteID      int        `json:"collecte_id"`
+    BenevoleID      int        `json:"benevole_id"`
+    Confirme        bool       `json:"confirme"`
+    DateConfirmation *time.Time `json:"date_confirmation,omitempty"`
+    BenevoleNom     string     `json:"benevole_nom,omitempty"`
+    BenevolePrenom  string     `json:"benevole_prenom,omitempty"`
+}
+
+
 
 // ============================================================
 // PRODUIT

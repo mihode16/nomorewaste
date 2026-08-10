@@ -16,14 +16,32 @@ class ProduitControleur extends Controleur
     public function index(): void
     {
         $this->verifierAuthentification();
-        $code = $this->getParam('code_barre', '');
-        $endpoint = '/api/produits' . ($code !== '' ? '?code_barre=' . urlencode($code) : '');
+
+        $recherche = $this->getParam('recherche', '');
+        $categorie = $this->getParam('categorie', '');
+        $tri = $this->getParam('tri', 'date_peremption_asc');
+
+        $categoriesResponse = $this->apiClient->get('/api/produits/categories');
+        $categories = ($categoriesResponse['code'] === 200 && is_array($categoriesResponse['data'])) ? $categoriesResponse['data'] : [];
+
+        $query = http_build_query(array_filter([
+            'recherche' => $recherche,
+            'categorie' => $categorie,
+            'tri' => $tri,
+        ]));
+        $endpoint = '/api/produits' . ($query ? '?' . $query : '');
+
         $response = $this->apiClient->get($endpoint);
+        $produits = ($response['code'] === 200 && is_array($response['data'])) ? $response['data'] : [];
+
         $this->rendre('backoffice/produits/index', [
             'titre' => 'Stock produits',
             'pageActive' => 'produits',
-            'produits' => ($response['code'] === 200 && is_array($response['data'])) ? $response['data'] : [],
-            'code_barre' => $code,
+            'produits' => $produits,
+            'filtre_recherche' => $recherche,
+            'filtre_categorie' => $categorie,
+            'filtre_tri' => $tri,
+            'categories' => $categories,
         ]);
     }
 
@@ -43,18 +61,50 @@ class ProduitControleur extends Controleur
         $this->verifierAuthentification();
         if (!$this->estPost()) {
             $this->rediriger('/admin/produits/creer');
+            return;
         }
+
+        $collecteId = (int)$this->getParam('collecte_id', 0);
+
+        if ($collecteId > 0) {
+            $collecteResponse = $this->apiClient->get('/api/collectes/' . $collecteId);
+            if ($collecteResponse['code'] === 200) {
+                $collecte = $collecteResponse['data'];
+                if (empty($collecte['validee']) || ($collecte['statut'] ?? '') !== 'Terminée') {
+                    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Impossible d\'ajouter un produit : la collecte doit être validée et terminée.'];
+                    $this->rediriger('/admin/collectes/' . $collecteId);
+                    return;
+                }
+            } else {
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Collecte introuvable.'];
+                $this->rediriger('/admin/collectes');
+                return;
+            }
+        }
+
         $data = [
-            'code_barre' => $this->getParam('code_barre'),
+            'code_barre' => $this->getParam('code_barre', ''),
             'nom' => $this->getParam('nom'),
             'categorie' => $this->getParam('categorie'),
             'quantite' => (int)$this->getParam('quantite', 1),
             'date_peremption' => $this->getParam('date_peremption'),
-            'collecte_id' => (int)$this->getParam('collecte_id'),
+            'collecte_id' => $collecteId,
         ];
+
         $response = $this->apiClient->post('/api/produits', $data);
-        $_SESSION['flash'] = ['type' => ($response['code'] === 201) ? 'success' : 'danger', 'message' => ($response['code'] === 201) ? 'Produit enregistré' : 'Erreur'];
-        $this->rediriger('/admin/produits');
+
+        if ($response['code'] === 201) {
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Produit ajouté avec succès.'];
+        } else {
+            $erreur = $response['data']['error'] ?? 'Erreur lors de l\'ajout';
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreur : ' . $erreur];
+        }
+
+        if ($collecteId > 0) {
+            $this->rediriger('/admin/collectes/' . $collecteId);
+        } else {
+            $this->rediriger('/admin/produits');
+        }
     }
 
     public function modifier(int $id): void

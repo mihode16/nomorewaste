@@ -89,24 +89,24 @@ func (r *BenevoleRepository) TrouverTous() ([]modeles.Benevole, error) {
 }
 
 func (r *BenevoleRepository) competencesPour(benevoleID int) ([]modeles.Competence, error) {
-	rows, err := r.db.Query(`
-		SELECT c.id, c.nom, c.description FROM competence c
-		JOIN benevole_competence bc ON bc.competence_id = c.id
-		WHERE bc.benevole_id = ?
-	`, benevoleID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var comps []modeles.Competence
-	for rows.Next() {
-		var c modeles.Competence
-		if err := rows.Scan(&c.ID, &c.Nom, &c.Description); err != nil {
-			return nil, err
-		}
-		comps = append(comps, c)
-	}
-	return comps, nil
+    rows, err := r.db.Query(`
+        SELECT c.id, c.nom, c.description FROM competence c
+        JOIN benevole_competence bc ON bc.competence_id = c.id
+        WHERE bc.benevole_id = ?
+    `, benevoleID)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    var comps []modeles.Competence
+    for rows.Next() {
+        var c modeles.Competence
+        if err := rows.Scan(&c.ID, &c.Nom, &c.Description); err != nil {
+            return nil, err
+        }
+        comps = append(comps, c)
+    }
+    return comps, nil
 }
 
 func (r *BenevoleRepository) TrouverParID(id int) (*modeles.Benevole, error) {
@@ -162,39 +162,46 @@ func (r *BenevoleRepository) ListerCompetences() ([]modeles.Competence, error) {
 }
 
 func (r *BenevoleRepository) TrouverValides() ([]modeles.Benevole, error) {
-	rows, err := r.db.Query(`
-		SELECT u.id, u.email, u.nom, u.prenom, u.telephone, u.adresse, u.date_inscription, u.est_actif,
-		       b.date_candidature, b.statut_candidature
-		FROM utilisateur u
-		JOIN benevole b ON u.id = b.id
-		WHERE u.est_actif = 1 AND b.statut_candidature = 'Validé'
-	`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+    rows, err := r.db.Query(`
+        SELECT u.id, u.email, u.nom, u.prenom, u.telephone, u.adresse, u.date_inscription, u.est_actif,
+               b.date_candidature, b.statut_candidature
+        FROM utilisateur u
+        JOIN benevole b ON u.id = b.id
+        WHERE u.est_actif = 1 AND b.statut_candidature = 'Validé'
+    `)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
 
-	var list []modeles.Benevole
-	for rows.Next() {
-		var b modeles.Benevole
-		var telephone, adresse sql.NullString
-		var dateCandidature sql.NullTime
+    var list []modeles.Benevole
+    for rows.Next() {
+        var b modeles.Benevole
+        var telephone, adresse sql.NullString
+        var dateCandidature sql.NullTime
 
-		err := rows.Scan(
-			&b.ID, &b.Email, &b.Nom, &b.Prenom, &telephone, &adresse,
-			&b.DateInscription, &b.EstActif,
-			&dateCandidature, &b.StatutCandidature,
-		)
-		if err != nil {
-			return nil, err
-		}
+        err := rows.Scan(
+            &b.ID, &b.Email, &b.Nom, &b.Prenom, &telephone, &adresse,
+            &b.DateInscription, &b.EstActif,
+            &dateCandidature, &b.StatutCandidature,
+        )
+        if err != nil {
+            return nil, err
+        }
 
-		b.Telephone = telephone.String
-		b.Adresse = adresse.String
-		if dateCandidature.Valid {
-			b.DateCandidature = dateCandidature.Time
-		}
-		list = append(list, b)
-	}
-	return list, nil
+        b.Telephone = telephone.String
+        b.Adresse = adresse.String
+        if dateCandidature.Valid {
+            b.DateCandidature = dateCandidature.Time
+        }
+
+        // Charger les compétences
+        competences, err := r.competencesPour(b.ID)
+        if err == nil {
+            b.Competences = competences
+        }
+
+        list = append(list, b)
+    }
+    return list, nil
 }

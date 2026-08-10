@@ -52,15 +52,18 @@ func main() {
 
 	router.HandleFunc("/api/auth/login", authControleur.Login).Methods("POST")
 
-	router.HandleFunc("/api/commercants", commercantControleur.Creer).Methods("POST")
+	// Routes spécifiques (sans paramètre)
+	router.HandleFunc("/api/commercants/types", commercantControleur.ListeTypes).Methods("GET")
 	router.HandleFunc("/api/commercants", commercantControleur.Lister).Methods("GET")
+	router.HandleFunc("/api/commercants", commercantControleur.Creer).Methods("POST")
+	// Routes avec paramètre {id}
+	router.HandleFunc("/api/commercants/{id}/valider", commercantControleur.Valider).Methods("POST")
+	router.HandleFunc("/api/commercants/{id}/renouveler", commercantControleur.RenouvelerAdhesion).Methods("POST")
+	router.HandleFunc("/api/commercants/{id}/demander-renouvellement", commercantControleur.DemanderRenouvellement).Methods("POST")
 	router.HandleFunc("/api/commercants/{id}", commercantControleur.TrouverParID).Methods("GET")
 	router.HandleFunc("/api/commercants/{id}", commercantControleur.MettreAJour).Methods("PUT")
 	router.HandleFunc("/api/commercants/{id}", commercantControleur.Supprimer).Methods("DELETE")
-	router.HandleFunc("/api/commercants/{id}/demander-renouvellement", commercantControleur.DemanderRenouvellement).Methods("POST")
-	router.HandleFunc("/api/commercants/{id}/renouveler", commercantControleur.RenouvelerAdhesion).Methods("POST")
-	router.HandleFunc("/api/commercants/adhesions/expirantes", commercantControleur.VerifierAdhesionsExpirantes).Methods("GET")
-	router.HandleFunc("/api/commercants/{id}/valider", commercantControleur.Valider).Methods("POST")
+
 
 	router.HandleFunc("/api/collectes", collecteControleur.Creer).Methods("POST")
 	router.HandleFunc("/api/collectes", collecteControleur.Lister).Methods("GET")
@@ -69,12 +72,17 @@ func main() {
 	router.HandleFunc("/api/collectes/{id}", collecteControleur.MettreAJour).Methods("PUT")
 	router.HandleFunc("/api/collectes/{id}/terminer", collecteControleur.Terminer).Methods("POST")
 	router.HandleFunc("/api/collectes/{id}", collecteControleur.Supprimer).Methods("DELETE")
+	router.HandleFunc("/api/collectes/{id}/produits", produitControleur.ListerParCollecte).Methods("GET")
+	router.HandleFunc("/api/collectes/{id}/benevoles", collecteControleur.AjouterBenevole).Methods("POST")
+	router.HandleFunc("/api/collectes/{id}/confirmer", collecteControleur.ConfirmerBenevole).Methods("POST")
 
+	router.HandleFunc("/api/produits/categories", produitControleur.ListerCategories).Methods("GET")
 	router.HandleFunc("/api/produits", produitControleur.Creer).Methods("POST")
 	router.HandleFunc("/api/produits", produitControleur.Lister).Methods("GET")
 	router.HandleFunc("/api/produits/{id}", produitControleur.TrouverParID).Methods("GET")
 	router.HandleFunc("/api/produits/{id}", produitControleur.MettreAJour).Methods("PUT")
 	router.HandleFunc("/api/produits/{id}", produitControleur.Supprimer).Methods("DELETE")
+
 
 	router.HandleFunc("/api/benevoles", benevoleControleur.Creer).Methods("POST")
 	router.HandleFunc("/api/benevoles", benevoleControleur.Lister).Methods("GET")

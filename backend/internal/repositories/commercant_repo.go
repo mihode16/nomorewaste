@@ -69,39 +69,58 @@ func (r *CommercantRepository) Creer(commercant *modeles.CommercantCreation) (in
 	return int(id), nil
 }
 
-func (r *CommercantRepository) TrouverTous() ([]modeles.Commercant, error) {
-	query := `
-		SELECT u.id, u.email, u.nom, u.prenom, u.telephone, u.adresse, u.date_inscription, u.est_actif,
-		       c.siret, c.raison_sociale, c.type_commerce, c.date_debut_adhesion, c.date_fin_adhesion, c.est_renouvele_automatiquement, c.statut_adhesion, c.demande_renouvellement
-		FROM utilisateur u
-		JOIN commercant c ON u.id = c.id
-		WHERE u.est_actif = 1
-	`
+func (r *CommercantRepository) TrouverTous(raisonSociale, statut, typeCommerce string) ([]modeles.Commercant, error) {
+    query := `
+        SELECT u.id, u.email, u.nom, u.prenom, u.telephone, u.adresse, u.date_inscription, u.est_actif,
+               c.siret, c.raison_sociale, c.type_commerce, c.date_debut_adhesion, c.date_fin_adhesion,
+               c.est_renouvele_automatiquement, c.statut_adhesion, c.demande_renouvellement
+        FROM utilisateur u
+        JOIN commercant c ON u.id = c.id
+        WHERE u.est_actif = 1
+    `
+    var args []interface{}
+    if raisonSociale != "" {
+        query += " AND c.raison_sociale LIKE ?"
+        args = append(args, "%"+raisonSociale+"%")
+    }
+    if statut != "" {
+        query += " AND c.statut_adhesion = ?"
+        args = append(args, statut)
+    }
+    if typeCommerce != "" {
+        query += " AND c.type_commerce = ?"
+        args = append(args, typeCommerce)
+    }
+    query += " ORDER BY c.raison_sociale"
 
-	rows, err := r.db.Query(query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+    rows, err := r.db.Query(query, args...)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
 
-	var commercants []modeles.Commercant
-	for rows.Next() {
-		var c modeles.Commercant
-		err := rows.Scan(
-			&c.ID, &c.Email, &c.Nom, &c.Prenom, &c.Telephone, &c.Adresse,
-			&c.DateInscription, &c.EstActif,
-			&c.Siret, &c.RaisonSociale, &c.TypeCommerce,
-			&c.DateDebutAdhesion, &c.DateFinAdhesion, &c.EstRenouveleAutomatiquement,
-			&c.StatutAdhesion,
-			&c.DemandeRenouvellement,
-		)
-		if err != nil {
-			return nil, err
-		}
-		commercants = append(commercants, c)
-	}
-
-	return commercants, nil
+    var commercants []modeles.Commercant
+    for rows.Next() {
+        var c modeles.Commercant
+        // Gestion des NULL pour telephone, adresse etc.
+        var telephone, adresse sql.NullString
+        err := rows.Scan(
+            &c.ID, &c.Email, &c.Nom, &c.Prenom, &telephone, &adresse,
+            &c.DateInscription, &c.EstActif,
+            &c.Siret, &c.RaisonSociale, &c.TypeCommerce,
+            &c.DateDebutAdhesion, &c.DateFinAdhesion,
+            &c.EstRenouveleAutomatiquement,
+            &c.StatutAdhesion,
+            &c.DemandeRenouvellement,
+        )
+        if err != nil {
+            return nil, err
+        }
+        c.Telephone = telephone.String
+        c.Adresse = adresse.String
+        commercants = append(commercants, c)
+    }
+    return commercants, nil
 }
 
 func (r *CommercantRepository) TrouverParID(id int) (*modeles.Commercant, error) {
@@ -124,6 +143,23 @@ func (r *CommercantRepository) TrouverParID(id int) (*modeles.Commercant, error)
 		return nil, err
 	}
 	return &c, nil
+}
+
+func (r *CommercantRepository) ListerTypes() ([]string, error) {
+    rows, err := r.db.Query(`SELECT DISTINCT type_commerce FROM commercant WHERE type_commerce IS NOT NULL AND type_commerce != '' ORDER BY type_commerce`)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    var types []string
+    for rows.Next() {
+        var t string
+        if err := rows.Scan(&t); err != nil {
+            return nil, err
+        }
+        types = append(types, t)
+    }
+    return types, nil
 }
 
 func (r *CommercantRepository) MettreAJour(commercant *modeles.Commercant) error {

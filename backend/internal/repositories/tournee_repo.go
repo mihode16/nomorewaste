@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"nomorewaste/internal/modeles"
+	"nomorewaste/internal/utils"
 )
 
 type TourneeRepository struct {
@@ -15,23 +16,6 @@ func NouveauTourneeRepository(db *sql.DB) *TourneeRepository {
 	return &TourneeRepository{db: db}
 }
 
-func parseDateTime(s string) (time.Time, error) {
-	formats := []string{
-		"2006-01-02 15:04:05",
-		"2006-01-02T15:04:05",
-		"2006-01-02T15:04",
-		"2006-01-02 15:04",
-	}
-	var err error
-	for _, f := range formats {
-		var t time.Time
-		t, err = time.Parse(f, s)
-		if err == nil {
-			return t, nil
-		}
-	}
-	return time.Time{}, err
-}
 
 func (r *TourneeRepository) Creer(t *modeles.TourneeCreation) (int, error) {
 	tx, err := r.db.Begin()
@@ -40,7 +24,7 @@ func (r *TourneeRepository) Creer(t *modeles.TourneeCreation) (int, error) {
 	}
 	defer tx.Rollback()
 
-	depart, err := parseDateTime(t.DateHeureDepart)
+	depart, err := utils.ParseDateTime(t.DateHeureDepart)
 	if err != nil {
 		return 0, err
 	}

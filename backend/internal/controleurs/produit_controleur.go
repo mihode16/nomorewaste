@@ -9,6 +9,7 @@ import (
 
 	"nomorewaste/internal/modeles"
 	"nomorewaste/internal/services"
+	"nomorewaste/internal/utils"
 )
 
 type ProduitControleur struct {
@@ -36,15 +37,26 @@ func (c *ProduitControleur) Creer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *ProduitControleur) Lister(w http.ResponseWriter, r *http.Request) {
-	codeBarre := r.URL.Query().Get("code_barre")
-	statut := r.URL.Query().Get("statut")
-	list, err := c.service.Lister(codeBarre, statut)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(list)
+    recherche := r.URL.Query().Get("recherche")
+    categorie := r.URL.Query().Get("categorie")
+    tri := r.URL.Query().Get("tri")
+    list, err := c.service.Lister(recherche, categorie, tri)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(list)
+}
+
+func (c *ProduitControleur) ListerCategories(w http.ResponseWriter, r *http.Request) {
+    categories, err := c.service.ListerCategories()
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(categories)
 }
 
 func (c *ProduitControleur) TrouverParID(w http.ResponseWriter, r *http.Request) {
@@ -60,13 +72,38 @@ func (c *ProduitControleur) TrouverParID(w http.ResponseWriter, r *http.Request)
 
 func (c *ProduitControleur) MettreAJour(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-	var req modeles.Produit
+
+	var req struct {
+		CodeBarre      string `json:"code_barre"`
+		Nom            string `json:"nom"`
+		Categorie      string `json:"categorie"`
+		Quantite       int    `json:"quantite"`
+		DatePeremption string `json:"date_peremption"`
+		Statut         string `json:"statut"`
+		CollecteID     int    `json:"collecte_id"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Requête invalide", http.StatusBadRequest)
 		return
 	}
-	req.ID = id
-	if err := c.service.MettreAJour(&req); err != nil {
+
+	datePer, err := utils.ParseDate(req.DatePeremption)
+	if err != nil {
+		http.Error(w, "Date de péremption invalide", http.StatusBadRequest)
+		return
+	}
+
+	produit := modeles.Produit{
+		ID:             id,
+		CodeBarre:      req.CodeBarre,
+		Nom:            req.Nom,
+		Categorie:      req.Categorie,
+		Quantite:       req.Quantite,
+		DatePeremption: datePer,
+		Statut:         req.Statut,
+		CollecteID:     req.CollecteID,
+	}
+	if err := c.service.MettreAJour(&produit); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -83,3 +120,25 @@ func (c *ProduitControleur) Supprimer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"message": "ok"})
 }
+
+func (c *ProduitControleur) ListerParCollecte(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	collecteID, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ID de collecte invalide", http.StatusBadRequest)
+		return
+	}
+
+	produits, err := c.service.ListerParCollecte(collecteID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(produits)
+}
+
+
+

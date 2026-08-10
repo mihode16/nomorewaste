@@ -17,18 +17,37 @@ class CommercantControleur extends Controleur
      * Afficher la liste des commerçants
      */
     public function index(): void
-    {
-        $this->verifierAuthentification();
-        
-        $response = $this->apiClient->get('/api/commercants');
-        $commercants = $response['code'] === 200 ? $response['data'] : [];
-        
-        $this->rendre('backoffice/commercants/index', [
-            'titre' => 'Gestion des commerçants',
-            'pageActive' => 'commercants',
-            'commercants' => $commercants
-        ]);
-    }
+{
+    $this->verifierAuthentification();
+
+    $raisonSociale = $this->getParam('raison_sociale', '');
+    $statut = $this->getParam('statut', '');
+    $type = $this->getParam('type', '');
+
+    // Récupérer la liste des types depuis l'API
+    $typesResponse = $this->apiClient->get('/api/commercants/types');
+    $types = ($typesResponse['code'] === 200 && is_array($typesResponse['data'])) ? $typesResponse['data'] : [];
+
+    $query = http_build_query(array_filter([
+        'raison_sociale' => $raisonSociale,
+        'statut' => $statut,
+        'type' => $type,
+    ]));
+    $endpoint = '/api/commercants' . ($query ? '?' . $query : '');
+
+    $response = $this->apiClient->get($endpoint);
+    $commercants = $response['code'] === 200 ? $response['data'] : [];
+
+    $this->rendre('backoffice/commercants/index', [
+        'titre' => 'Gestion des commerçants',
+        'pageActive' => 'commercants',
+        'commercants' => $commercants,
+        'filtre_raison_sociale' => $raisonSociale,
+        'filtre_statut' => $statut,
+        'filtre_type' => $type,
+        'types' => $types,
+    ]);
+}
     
     /**
      * Afficher le formulaire de création

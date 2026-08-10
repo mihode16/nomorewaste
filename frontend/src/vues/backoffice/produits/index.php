@@ -3,10 +3,37 @@
     <a href="<?php echo url('/admin/produits/creer'); ?>" class="btn btn-success"><i class="bi bi-plus-circle"></i> Ajouter</a>
 </div>
 
-<form method="GET" action="<?php echo url('/admin/produits'); ?>" class="mb-3">
-    <div class="input-group" style="max-width:400px">
-        <input type="text" name="code_barre" class="form-control" placeholder="Rechercher par code-barres..." value="<?php echo htmlspecialchars($code_barre ?? ''); ?>">
-        <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+<!-- Barre de recherche et filtres -->
+<form method="GET" action="<?php echo url('/admin/produits'); ?>" class="row g-2 mb-4 align-items-end">
+    <div class="col-md-3">
+        <input type="text" name="recherche" class="form-control form-control-sm" 
+               placeholder="Rechercher par code-barres ou nom..." 
+               value="<?php echo htmlspecialchars($filtre_recherche ?? ''); ?>">
+    </div>
+    <div class="col-md-2">
+        <select name="categorie" class="form-select form-select-sm">
+            <option value="">Toutes les catégories</option>
+            <?php foreach ($categories as $cat): ?>
+                <option value="<?php echo htmlspecialchars($cat); ?>" <?php echo ($filtre_categorie ?? '') === $cat ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($cat); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="tri" class="form-select form-select-sm">
+            <option value="date_peremption_asc" <?php echo ($filtre_tri ?? '') === 'date_peremption_asc' ? 'selected' : ''; ?>>Péremption (plus proche)</option>
+            <option value="date_peremption_desc" <?php echo ($filtre_tri ?? '') === 'date_peremption_desc' ? 'selected' : ''; ?>>Péremption (plus lointaine)</option>
+            <option value="nom_asc" <?php echo ($filtre_tri ?? '') === 'nom_asc' ? 'selected' : ''; ?>>Nom (A→Z)</option>
+        </select>
+    </div>
+    <div class="col-md-3 d-flex gap-1">
+        <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+            <i class="bi bi-search"></i> Filtrer
+        </button>
+        <a href="<?php echo url('/admin/produits'); ?>" class="btn btn-secondary btn-sm flex-grow-1">
+            <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+        </a>
     </div>
 </form>
 
@@ -30,7 +57,14 @@
                 <?php else: ?>
                     <?php foreach ($produits as $p): ?>
                         <tr>
-                            <td><code><?php echo htmlspecialchars($p['code_barre']); ?></code></td>
+                            <td>
+                                <?php if (!empty($p['code_barre'])): ?>
+                                    <img src="<?php echo url('/barcode/' . rawurlencode($p['code_barre']) . '.svg'); ?>" alt="Code-barres" style="height:30px; vertical-align:middle;">
+                                    <br><small><?php echo htmlspecialchars($p['code_barre']); ?></small>
+                                <?php else: ?>
+                                    —
+                                <?php endif; ?>
+                            </td>
                             <td><?php echo htmlspecialchars($p['nom']); ?></td>
                             <td><?php echo htmlspecialchars($p['categorie'] ?? '-'); ?></td>
                             <td><?php echo (int)$p['quantite']; ?></td>
@@ -38,6 +72,11 @@
                             <td><?php echo badge_statut($p['statut']); ?></td>
                             <td>
                                 <div class="btn-group btn-group-sm">
+                                    <?php if (!empty($p['collecte_id'])): ?>
+                                        <a href="<?php echo url('/admin/collectes/' . $p['collecte_id']); ?>" class="btn btn-info" title="Voir la collecte"><i class="bi bi-eye"></i></a>
+                                    <?php else: ?>
+                                        <span class="btn btn-secondary btn-sm disabled" title="Aucune collecte"><i class="bi bi-eye"></i></span>
+                                    <?php endif; ?>
                                     <a href="<?php echo url('/admin/produits/' . $p['id'] . '/modifier'); ?>" class="btn btn-primary"><i class="bi bi-pencil"></i></a>
                                     <form method="POST" action="<?php echo url('/admin/produits/' . $p['id'] . '/supprimer'); ?>" class="d-inline" onsubmit="return confirm('Supprimer ?');">
                                         <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i></button>

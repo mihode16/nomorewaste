@@ -47,14 +47,27 @@ func (c *CommercantControleur) Creer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *CommercantControleur) Lister(w http.ResponseWriter, r *http.Request) {
-    commercants, err := c.service.Lister()
+    raisonSociale := r.URL.Query().Get("raison_sociale")
+    statut := r.URL.Query().Get("statut")
+    typeCommerce := r.URL.Query().Get("type")
+
+    commercants, err := c.service.Lister(raisonSociale, statut, typeCommerce)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
-
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(commercants)
+}
+
+func (c *CommercantControleur) ListeTypes(w http.ResponseWriter, r *http.Request) {
+    types, err := c.service.ListerTypes()
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(types)
 }
 
 func (c *CommercantControleur) TrouverParID(w http.ResponseWriter, r *http.Request) {

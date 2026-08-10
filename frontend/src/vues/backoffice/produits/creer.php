@@ -8,10 +8,6 @@
         <form method="POST" action="<?php echo url('/admin/produits'); ?>">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Code-barres *</label>
-                    <input type="text" name="code_barre" class="form-control" required placeholder="Ex: 3760123456789">
-                </div>
-                <div class="col-md-6 mb-3">
                     <label class="form-label">Nom *</label>
                     <input type="text" name="nom" class="form-control" required>
                 </div>

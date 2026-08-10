@@ -1,10 +1,46 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?php echo htmlspecialchars($titre ?? 'Gestion des commerçants'); ?></h2>
-    <a href="<?php echo url('/admin/commercants/creer'); ?>" class="btn btn-success">
+    <a href="<?php echo url('/admin/commercants/creer'); ?>" class="btn btn-success btn-sm">
         <i class="bi bi-plus-circle"></i> Nouveau commerçant
     </a>
 </div>
 
+<!-- Barre de recherche et filtres -->
+<form method="GET" action="<?php echo url('/admin/commercants'); ?>" class="row g-2 mb-4 align-items-end">
+    <div class="col-md-3">
+        <input type="text" name="raison_sociale" class="form-control form-control-sm" 
+               placeholder="Rechercher par raison sociale..." 
+               value="<?php echo htmlspecialchars($filtre_raison_sociale ?? ''); ?>">
+    </div>
+    <div class="col-md-3">
+        <select name="statut" class="form-select form-select-sm">
+            <option value="">Tous les statuts</option>
+            <option value="en_attente" <?php echo ($filtre_statut ?? '') === 'en_attente' ? 'selected' : ''; ?>>En attente</option>
+            <option value="valide" <?php echo ($filtre_statut ?? '') === 'valide' ? 'selected' : ''; ?>>Validé</option>
+            <option value="refuse" <?php echo ($filtre_statut ?? '') === 'refuse' ? 'selected' : ''; ?>>Refusé</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select name="type" class="form-select form-select-sm">
+            <option value="">Tous les types</option>
+            <?php foreach ($types as $t): ?>
+                <option value="<?php echo htmlspecialchars($t); ?>" <?php echo ($filtre_type ?? '') === $t ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($t); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="col-md-3 d-flex gap-1">
+        <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+            <i class="bi bi-search"></i> Filtrer
+        </button>
+        <a href="<?php echo url('/admin/commercants'); ?>" class="btn btn-secondary btn-sm flex-grow-1">
+            <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+        </a>
+    </div>
+</form>
+
+<!-- Le tableau reste inchangé -->
 <div class="card">
     <div class="card-body">
         <div class="table-responsive">
@@ -78,16 +114,16 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <a href="<?php echo url('/admin/commercants/' . $c['id'] . '/modifier'); ?>" class="btn btn-primary" title="Modifier">
+                                        <a href="<?php echo url('/admin/commercants/' . $c['id'] . '/modifier'); ?>" class="btn btn-primary btn-sm" title="Modifier">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                         <?php if ($estValide): ?>
-                                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#renouvelerModal<?php echo $c['id']; ?>" title="Renouveler">
+                                            <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#renouvelerModal<?php echo $c['id']; ?>" title="Renouveler">
                                                 <i class="bi bi-arrow-repeat"></i>
                                             </button>
                                         <?php endif; ?>
                                         <form method="POST" action="<?php echo url('/admin/commercants/' . $c['id'] . '/supprimer'); ?>" class="d-inline" onsubmit="return confirm('Confirmer la suppression ?');">
-                                            <button type="submit" class="btn btn-danger" title="Supprimer">
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>

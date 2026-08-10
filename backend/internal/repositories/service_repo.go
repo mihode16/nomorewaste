@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"nomorewaste/internal/modeles"
+	"nomorewaste/internal/utils"
 )
 
 type ServiceRepository struct {
@@ -33,11 +34,11 @@ func (r *ServiceRepository) ListerServices() ([]modeles.Service, error) {
 }
 
 func (r *ServiceRepository) CreerPlanning(p *modeles.ServicePlanningCreation) (int, error) {
-	debut, err := parseDateTime(p.DateHeureDebut)
+	debut, err := utils.ParseDateTime(p.DateHeureDebut)
 	if err != nil {
 		return 0, err
 	}
-	fin, err := parseDateTime(p.DateHeureFin)
+	fin, err := utils.ParseDateTime(p.DateHeureFin)
 	if err != nil {
 		return 0, err
 	}

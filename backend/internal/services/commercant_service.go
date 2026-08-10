@@ -34,12 +34,16 @@ func (s *CommercantService) Creer(commercant *modeles.CommercantCreation) (int, 
     return s.repo.Creer(commercant)
 }
 
-func (s *CommercantService) Lister() ([]modeles.Commercant, error) {
-    return s.repo.TrouverTous()
+func (s *CommercantService) Lister(raisonSociale, statut, typeCommerce string) ([]modeles.Commercant, error) {
+    return s.repo.TrouverTous(raisonSociale, statut, typeCommerce)
 }
 
 func (s *CommercantService) TrouverParID(id int) (*modeles.Commercant, error) {
     return s.repo.TrouverParID(id)
+}
+
+func (s *CommercantService) ListerTypes() ([]string, error) {
+    return s.repo.ListerTypes()
 }
 
 func (s *CommercantService) MettreAJour(commercant *modeles.Commercant) error {

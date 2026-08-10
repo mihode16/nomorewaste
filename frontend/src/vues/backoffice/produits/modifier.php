@@ -27,6 +27,7 @@
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Statut</label>
                     <select name="statut" class="form-select">
+                        <option value="À venir" <?php echo ($p['statut'] ?? '') === 'À venir' ? 'selected' : ''; ?>>À venir</option>
                         <?php foreach (['Stocké', 'En tournée', 'Distribué'] as $s): ?>
                             <option value="<?php echo $s; ?>" <?php echo ($p['statut'] ?? '') === $s ? 'selected' : ''; ?>><?php echo $s; ?></option>
                         <?php endforeach; ?>

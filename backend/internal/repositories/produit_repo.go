@@ -2,9 +2,11 @@ package repositories
 
 import (
 	"database/sql"
-	"time"
+	"fmt"
+	"log"
 
 	"nomorewaste/internal/modeles"
+	"nomorewaste/internal/utils"
 )
 
 type ProduitRepository struct {
@@ -15,21 +17,8 @@ func NouveauProduitRepository(db *sql.DB) *ProduitRepository {
 	return &ProduitRepository{db: db}
 }
 
-func parseDate(s string) (time.Time, error) {
-	formats := []string{"2006-01-02", "2006-01-02T15:04:05", "2006-01-02 15:04:05"}
-	var err error
-	for _, f := range formats {
-		var t time.Time
-		t, err = time.Parse(f, s)
-		if err == nil {
-			return t, nil
-		}
-	}
-	return time.Time{}, err
-}
-
 func (r *ProduitRepository) Creer(p *modeles.ProduitCreation) (int, error) {
-	datePer, err := parseDate(p.DatePeremption)
+	_, err := utils.ParseDate(p.DatePeremption)
 	if err != nil {
 		return 0, err
 	}
@@ -40,7 +29,7 @@ func (r *ProduitRepository) Creer(p *modeles.ProduitCreation) (int, error) {
 	result, err := r.db.Exec(`
 		INSERT INTO produit (code_barre, nom, categorie, quantite, date_peremption, collecte_id)
 		VALUES (?, ?, ?, ?, ?, ?)
-	`, p.CodeBarre, p.Nom, p.Categorie, qty, datePer, p.CollecteID)
+	`, p.CodeBarre, p.Nom, p.Categorie, qty, p.DatePeremption, p.CollecteID)
 	if err != nil {
 		return 0, err
 	}
@@ -48,18 +37,47 @@ func (r *ProduitRepository) Creer(p *modeles.ProduitCreation) (int, error) {
 	return int(id), nil
 }
 
-func (r *ProduitRepository) TrouverTous(codeBarre, statut string) ([]modeles.Produit, error) {
+func (r *ProduitRepository) TrouverParCodeBarre(code string) (*modeles.Produit, error) {
+	var p modeles.Produit
+	err := r.db.QueryRow(`
+		SELECT id, code_barre, nom, categorie, quantite, date_peremption, date_entree_stock, statut, collecte_id
+		FROM produit WHERE code_barre = ?
+	`, code).Scan(&p.ID, &p.CodeBarre, &p.Nom, &p.Categorie, &p.Quantite, &p.DatePeremption, &p.DateEntreeStock, &p.Statut, &p.CollecteID)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
+func (r *ProduitRepository) TrouverTous(search, categorie, statut, tri string) ([]modeles.Produit, error) {
 	query := `SELECT id, code_barre, nom, categorie, quantite, date_peremption, date_entree_stock, statut, collecte_id FROM produit WHERE 1=1`
 	var args []interface{}
-	if codeBarre != "" {
-		query += ` AND code_barre LIKE ?`
-		args = append(args, "%"+codeBarre+"%")
+
+	if search != "" {
+		query += ` AND (code_barre LIKE ? OR nom LIKE ?)`
+		like := "%" + search + "%"
+		args = append(args, like, like)
+	}
+	if categorie != "" {
+		query += ` AND categorie = ?`
+		args = append(args, categorie)
 	}
 	if statut != "" {
 		query += ` AND statut = ?`
 		args = append(args, statut)
 	}
-	query += ` ORDER BY date_entree_stock DESC`
+
+	// Tri par date de péremption
+	if tri == "proche" {
+		query += ` ORDER BY date_peremption ASC`
+	} else if tri == "lointain" {
+		query += ` ORDER BY date_peremption DESC`
+	} else {
+		// Tri par défaut : date d'entrée en stock décroissante
+		query += ` ORDER BY date_entree_stock DESC`
+	}
+
+	log.Printf("🔍 Requête produits: %s, args: %v", query, args)
 
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
@@ -91,11 +109,22 @@ func (r *ProduitRepository) TrouverParID(id int) (*modeles.Produit, error) {
 }
 
 func (r *ProduitRepository) MettreAJour(p *modeles.Produit) error {
-	_, err := r.db.Exec(`
+	dateStr := p.DatePeremption.Format("2006-01-02")
+	result, err := r.db.Exec(`
 		UPDATE produit SET code_barre = ?, nom = ?, categorie = ?, quantite = ?, date_peremption = ?, statut = ?, collecte_id = ?
 		WHERE id = ?
-	`, p.CodeBarre, p.Nom, p.Categorie, p.Quantite, p.DatePeremption, p.Statut, p.CollecteID, p.ID)
-	return err
+	`, p.CodeBarre, p.Nom, p.Categorie, p.Quantite, dateStr, p.Statut, p.CollecteID, p.ID)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("aucun produit trouvé avec l'id %d", p.ID)
+	}
+	return nil
 }
 
 func (r *ProduitRepository) Supprimer(id int) error {
@@ -113,5 +142,82 @@ func (r *ProduitRepository) MarquerDistribue(ids []int) error {
 }
 
 func (r *ProduitRepository) TrouverEnStock() ([]modeles.Produit, error) {
-	return r.TrouverTous("", "Stocké")
+	return r.TrouverTous("", "", "Stocké", "")
+}
+
+func (r *ProduitRepository) TrouverParCollecteID(collecteID int) ([]modeles.Produit, error) {
+	rows, err := r.db.Query(`
+		SELECT id, code_barre, nom, categorie, quantite, date_peremption, date_entree_stock, statut, collecte_id
+		FROM produit WHERE collecte_id = ?
+		ORDER BY date_entree_stock DESC
+	`, collecteID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var produits []modeles.Produit
+	for rows.Next() {
+		var p modeles.Produit
+		if err := rows.Scan(&p.ID, &p.CodeBarre, &p.Nom, &p.Categorie, &p.Quantite, &p.DatePeremption, &p.DateEntreeStock, &p.Statut, &p.CollecteID); err != nil {
+			return nil, err
+		}
+		produits = append(produits, p)
+	}
+	return produits, nil
+}
+
+func (r *ProduitRepository) ListerCategories() ([]string, error) {
+    rows, err := r.db.Query(`SELECT DISTINCT categorie FROM produit WHERE categorie IS NOT NULL AND categorie != '' ORDER BY categorie`)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    var categories []string
+    for rows.Next() {
+        var c string
+        if err := rows.Scan(&c); err != nil {
+            return nil, err
+        }
+        categories = append(categories, c)
+    }
+    return categories, nil
+}
+
+func (r *ProduitRepository) TrouverTousFiltres(recherche, categorie, tri string) ([]modeles.Produit, error) {
+    query := `SELECT id, code_barre, nom, categorie, quantite, date_peremption, date_entree_stock, statut, collecte_id FROM produit WHERE 1=1`
+    var args []interface{}
+    if recherche != "" {
+        query += ` AND (code_barre LIKE ? OR nom LIKE ?)`
+        like := "%" + recherche + "%"
+        args = append(args, like, like)
+    }
+    if categorie != "" {
+        query += ` AND categorie = ?`
+        args = append(args, categorie)
+    }
+    switch tri {
+    case "date_peremption_asc":
+        query += ` ORDER BY date_peremption ASC`
+    case "date_peremption_desc":
+        query += ` ORDER BY date_peremption DESC`
+    case "nom_asc":
+        query += ` ORDER BY nom ASC`
+    default:
+        query += ` ORDER BY date_peremption ASC`
+    }
+    rows, err := r.db.Query(query, args...)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    var list []modeles.Produit
+    for rows.Next() {
+        var p modeles.Produit
+        if err := rows.Scan(&p.ID, &p.CodeBarre, &p.Nom, &p.Categorie, &p.Quantite, &p.DatePeremption, &p.DateEntreeStock, &p.Statut, &p.CollecteID); err != nil {
+            return nil, err
+        }
+        list = append(list, p)
+    }
+    return list, nil
 }

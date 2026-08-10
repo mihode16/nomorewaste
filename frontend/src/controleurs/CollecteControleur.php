@@ -16,12 +16,31 @@ class CollecteControleur extends Controleur
     public function index(): void
     {
         $this->verifierAuthentification();
-        $response = $this->apiClient->get('/api/collectes');
+
+        $commercant = $this->getParam('commercant', '');
+        $statut = $this->getParam('statut', '');
+        $dateDebut = $this->getParam('date_debut', '');
+        $dateFin = $this->getParam('date_fin', '');
+
+        $query = http_build_query(array_filter([
+            'commercant' => $commercant,
+            'statut' => $statut,
+            'date_debut' => $dateDebut,
+            'date_fin' => $dateFin,
+        ]));
+        $endpoint = '/api/collectes' . ($query ? '?' . $query : '');
+
+        $response = $this->apiClient->get($endpoint);
         $collectes = ($response['code'] === 200 && is_array($response['data'])) ? $response['data'] : [];
+
         $this->rendre('backoffice/collectes/index', [
             'titre' => 'Collectes',
             'pageActive' => 'collectes',
             'collectes' => $collectes,
+            'filtre_commercant' => $commercant,
+            'filtre_statut' => $statut,
+            'filtre_date_debut' => $dateDebut,
+            'filtre_date_fin' => $dateFin,
         ]);
     }
 
@@ -57,49 +76,47 @@ class CollecteControleur extends Controleur
         $this->rediriger('/admin/collectes');
     }
 
-    public function valider(int $id): void
+    public function modifier(int $id): void
     {
         $this->verifierAuthentification();
 
-        if (!$this->estPost()) {
+        $collecte = $this->apiClient->get('/api/collectes/' . $id);
+        error_log('=== COLLECTE MODIFIER API RESPONSE ===');
+        error_log('Code: ' . $collecte['code']);
+        error_log('Data: ' . print_r($collecte['data'], true));
+
+        if ($collecte['code'] !== 200) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Collecte non trouvée ou erreur API (code '.$collecte['code'].')'];
             $this->rediriger('/admin/collectes');
             return;
         }
 
-        $response = $this->apiClient->post('/api/collectes/' . $id . '/valider', []);
-
-        if ($response['code'] === 200) {
-            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Collecte validée avec succès'];
-        } else {
-            $erreur = $response['data']['error'] ?? 'Erreur lors de la validation';
-            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreur : ' . $erreur];
-        }
-
-        $this->rediriger('/admin/collectes');
-    }
-
-    public function modifier(int $id): void
-    {
-        $this->verifierAuthentification();
-        $collecte = $this->apiClient->get('/api/collectes/' . $id);
-        $commercants = $this->apiClient->get('/api/commercants');
-        if ($collecte['code'] !== 200) {
+        if (!is_array($collecte['data'])) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Données de collecte invalides'];
             $this->rediriger('/admin/collectes');
+            return;
         }
+
+        $commercants = $this->apiClient->get('/api/commercants');
+        $commercantsData = ($commercants['code'] === 200 && is_array($commercants['data'])) ? $commercants['data'] : [];
+
         $this->rendre('backoffice/collectes/modifier', [
-            'titre' => 'Modifier la collecte',
+            'titre' => 'Modifier la collecte #' . $id,
             'pageActive' => 'collectes',
             'collecte' => $collecte['data'],
-            'commercants' => ($commercants['code'] === 200) ? $commercants['data'] : [],
+            'commercants' => $commercantsData,
         ]);
     }
 
     public function mettreAJour(int $id): void
     {
         $this->verifierAuthentification();
+
         if (!$this->estPost()) {
             $this->rediriger('/admin/collectes/' . $id . '/modifier');
+            return;
         }
+
         $dt = $this->getParam('date_heure_collecte');
         $data = [
             'date_heure_collecte' => str_replace('T', ' ', $dt),
@@ -108,8 +125,23 @@ class CollecteControleur extends Controleur
             'commentaire' => $this->getParam('commentaire', ''),
             'statut' => $this->getParam('statut', 'Planifiée'),
         ];
+
+        error_log('=== COLLECTE MISE A JOUR DATA ===');
+        error_log(print_r($data, true));
+
         $response = $this->apiClient->put('/api/collectes/' . $id, $data);
-        $_SESSION['flash'] = ['type' => $response['code'] === 200 ? 'success' : 'danger', 'message' => $response['code'] === 200 ? 'Collecte mise à jour' : 'Erreur'];
+
+        error_log('=== COLLECTE MISE A JOUR API RESPONSE ===');
+        error_log('Code: ' . $response['code']);
+        error_log('Data: ' . print_r($response['data'], true));
+
+        if ($response['code'] === 200) {
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Collecte mise à jour avec succès'];
+        } else {
+            $erreur = $response['data']['error'] ?? 'Erreur lors de la mise à jour';
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreur : ' . $erreur];
+        }
+
         $this->rediriger('/admin/collectes');
     }
 
@@ -131,5 +163,116 @@ class CollecteControleur extends Controleur
             $_SESSION['flash'] = ['type' => 'success', 'message' => 'Collecte supprimée'];
         }
         $this->rediriger('/admin/collectes');
+    }
+
+    public function valider(int $id): void
+    {
+        $this->verifierAuthentification();
+        if (!$this->estPost()) {
+            $this->rediriger('/admin/collectes');
+            return;
+        }
+        $response = $this->apiClient->post('/api/collectes/' . $id . '/valider', []);
+        if ($response['code'] === 200) {
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Collecte validée, statut : Planifiée'];
+        } else {
+            $erreur = $response['data']['error'] ?? 'Erreur lors de la validation';
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreur : ' . $erreur];
+        }
+        $this->rediriger('/admin/collectes');
+    }
+
+    public function detail(int $id): void
+    {
+        $this->verifierAuthentification();
+        $collecte = $this->apiClient->get('/api/collectes/' . $id);
+        if ($collecte['code'] !== 200) {
+            $this->rediriger('/admin/collectes');
+            return;
+        }
+        $produits = $this->apiClient->get('/api/collectes/' . $id . '/produits');
+
+        // Récupérer la liste des bénévoles validés avec leurs compétences
+        $benevolesList = $this->apiClient->get('/api/benevoles/valides');
+        $benevolesMap = [];
+        if ($benevolesList['code'] === 200) {
+            foreach ($benevolesList['data'] as $b) {
+                $idB = (int)$b['id'];
+                $competences = [];
+                if (isset($b['competences']) && is_array($b['competences'])) {
+                    $competences = array_column($b['competences'], 'nom');
+                }
+                $benevolesMap[$idB] = [
+                    'nom' => $b['prenom'] . ' ' . $b['nom'],
+                    'competences' => $competences,
+                ];
+            }
+        }
+
+        $this->rendre('backoffice/collectes/detail', [
+            'titre' => 'Détail de la collecte #' . $id,
+            'pageActive' => 'collectes',
+            'collecte' => $collecte['data'],
+            'produits' => ($produits['code'] === 200) ? $produits['data'] : [],
+            'benevolesMap' => $benevolesMap,
+        ]);
+    }
+
+    public function gererBenevoles(int $id): void
+    {
+        $this->verifierAuthentification();
+        $collecte = $this->apiClient->get('/api/collectes/' . $id);
+        if ($collecte['code'] !== 200) {
+            $this->rediriger('/admin/collectes');
+        }
+        // Récupérer les bénévoles validés avec leurs compétences
+        $benevolesResponse = $this->apiClient->get('/api/benevoles/valides');
+        $benevolesValides = ($benevolesResponse['code'] === 200) ? $benevolesResponse['data'] : [];
+
+        // Construire un tableau associatif pour un accès rapide (id => données)
+        $benevolesMap = [];
+        foreach ($benevolesValides as $b) {
+            $competences = [];
+            if (!empty($b['competences'])) {
+                foreach ($b['competences'] as $comp) {
+                    $competences[] = $comp['nom'];
+                }
+            }
+            $benevolesMap[$b['id']] = [
+                'nom' => $b['prenom'] . ' ' . $b['nom'],
+                'competences' => implode(', ', $competences),
+            ];
+        }
+
+        $this->rendre('backoffice/collectes/benevoles', [
+            'titre' => 'Gérer les bénévoles - Collecte #' . $id,
+            'pageActive' => 'collectes',
+            'collecte' => $collecte['data'],
+            'benevoles' => $benevolesValides, // pour le select
+            'benevolesMap' => $benevolesMap,  // pour affichage dans le tableau
+        ]);
+    }
+
+    public function ajouterBenevole(int $id): void
+    {
+        $this->verifierAuthentification();
+        if (!$this->estPost()) {
+            $this->rediriger('/admin/collectes/' . $id . '/benevoles');
+            return;
+        }
+        $benevoleID = (int)$this->getParam('benevole_id');
+        if ($benevoleID <= 0) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Bénévole invalide'];
+            $this->rediriger('/admin/collectes/' . $id . '/benevoles');
+            return;
+        }
+        $response = $this->apiClient->post('/api/collectes/' . $id . '/benevoles', ['benevole_id' => $benevoleID]);
+        if ($response['code'] === 200) {
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Bénévole ajouté à la collecte'];
+        } else {
+            $erreur = $response['data']['error'] ?? 'Erreur lors de l\'ajout';
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreur : ' . $erreur];
+        }
+        $this->rediriger('/admin/collectes/' . $id . '/benevoles');
     }
 }

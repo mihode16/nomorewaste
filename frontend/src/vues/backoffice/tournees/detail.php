@@ -27,14 +27,28 @@
             <div class="card-header">Produits livrés</div>
             <div class="card-body table-responsive">
                 <table class="table table-sm mb-0">
-                    <thead><tr><th>Code-barres</th><th>Nom</th><th>Qté</th><th>Statut</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Code-barres</th>
+                            <th>Nom</th>
+                            <th>Qté</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         <?php if (empty($t['produits'])): ?>
                             <tr><td colspan="4" class="text-center">Aucun produit</td></tr>
                         <?php else: ?>
                             <?php foreach ($t['produits'] as $p): ?>
                                 <tr>
-                                    <td><code><?php echo htmlspecialchars($p['code_barre']); ?></code></td>
+                                    <td>
+                                        <?php if (!empty($p['code_barre'])): ?>
+                                            <img src="<?php echo url('/barcode/' . rawurlencode($p['code_barre']) . '.svg'); ?>" alt="Code-barres" style="height:30px; vertical-align:middle;">
+                                            <br><small><?php echo htmlspecialchars($p['code_barre']); ?></small>
+                                        <?php else: ?>
+                                            —
+                                        <?php endif; ?>
+                                    </td>
                                     <td><?php echo htmlspecialchars($p['nom']); ?></td>
                                     <td><?php echo (int)$p['quantite']; ?></td>
                                     <td><?php echo badge_statut($p['statut']); ?></td>
