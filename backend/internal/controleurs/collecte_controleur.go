@@ -2,7 +2,7 @@ package controleurs
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -24,15 +24,13 @@ func NouveauCollecteControleur(service *services.CollecteService) *CollecteContr
 func (c *CollecteControleur) Creer(w http.ResponseWriter, r *http.Request) {
 	var req modeles.CollecteCreation
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("❌ Erreur décodage JSON: %v", err)
 		http.Error(w, "Requête invalide", http.StatusBadRequest)
 		return
 	}
 
 	id, err := c.service.Creer(&req)
 	if err != nil {
-		log.Printf("❌ Erreur création collecte: %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		ecrireErreurJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -45,15 +43,14 @@ func (c *CollecteControleur) Creer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *CollecteControleur) Lister(w http.ResponseWriter, r *http.Request) {
-	// Récupérer les filtres
 	commercant := r.URL.Query().Get("commercant")
 	statut := r.URL.Query().Get("statut")
 	dateDebut := r.URL.Query().Get("date_debut")
 	dateFin := r.URL.Query().Get("date_fin")
+	commercantID, _ := strconv.Atoi(r.URL.Query().Get("commercant_id"))
 
-	collectes, err := c.service.Lister(commercant, statut, dateDebut, dateFin)
+	collectes, err := c.service.Lister(commercant, statut, dateDebut, dateFin, commercantID)
 	if err != nil {
-		log.Printf("❌ Erreur liste collectes: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -72,7 +69,6 @@ func (c *CollecteControleur) TrouverParID(w http.ResponseWriter, r *http.Request
 
 	collecte, err := c.service.TrouverParID(id)
 	if err != nil {
-		log.Printf("❌ Collecte %d non trouvée: %v", id, err)
 		http.Error(w, "Collecte non trouvée", http.StatusNotFound)
 		return
 	}
@@ -97,16 +93,12 @@ func (c *CollecteControleur) MettreAJour(w http.ResponseWriter, r *http.Request)
 		Statut            string `json:"statut"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("❌ Erreur décodage JSON: %v", err)
 		http.Error(w, "Requête invalide", http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("📝 Mise à jour collecte %d: date=%s, adresse=%s", id, req.DateHeureCollecte, req.AdresseCollecte)
-
 	dateHeure, err := utils.ParseDateTime(req.DateHeureCollecte)
 	if err != nil {
-		log.Printf("❌ Erreur parsing date '%s': %v", req.DateHeureCollecte, err)
 		http.Error(w, "Date/heure invalide", http.StatusBadRequest)
 		return
 	}
@@ -121,8 +113,7 @@ func (c *CollecteControleur) MettreAJour(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := c.service.MettreAJour(collecte); err != nil {
-		log.Printf("❌ Erreur mise à jour collecte %d: %v", id, err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		ecrireErreurJSON(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -142,7 +133,6 @@ func (c *CollecteControleur) Terminer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := c.service.MarquerTerminee(id); err != nil {
-		log.Printf("❌ Erreur terminer collecte %d: %v", id, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -163,7 +153,6 @@ func (c *CollecteControleur) Supprimer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := c.service.Supprimer(id); err != nil {
-		log.Printf("❌ Erreur suppression collecte %d: %v", id, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -172,6 +161,18 @@ func (c *CollecteControleur) Supprimer(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "Collecte supprimée avec succès",
 	})
+}
+
+func (c *CollecteControleur) TelechargerPDF(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+	data, err := c.service.ObtenirPDF(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"collecte-%d.pdf\"", id))
+	w.Write(data)
 }
 
 func (c *CollecteControleur) Valider(w http.ResponseWriter, r *http.Request) {
@@ -184,7 +185,6 @@ func (c *CollecteControleur) Valider(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := c.service.ValiderCollecte(id); err != nil {
-		log.Printf("❌ Erreur validation collecte %d: %v", id, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -206,12 +206,23 @@ func (c *CollecteControleur) AjouterBenevole(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	if err := c.service.AjouterBenevole(collecteID, req.BenevoleID); err != nil {
-		log.Printf("❌ Erreur ajout bénévole à collecte %d: %v", collecteID, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"message": "Bénévole ajouté"})
+}
+
+func (c *CollecteControleur) SupprimerBenevole(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	collecteID, _ := strconv.Atoi(vars["id"])
+	benevoleID, _ := strconv.Atoi(vars["benevoleId"])
+	if err := c.service.SupprimerBenevole(collecteID, benevoleID); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": "Bénévole retiré"})
 }
 
 func (c *CollecteControleur) ConfirmerBenevole(w http.ResponseWriter, r *http.Request) {
@@ -225,7 +236,6 @@ func (c *CollecteControleur) ConfirmerBenevole(w http.ResponseWriter, r *http.Re
 		return
 	}
 	if err := c.service.ConfirmerBenevole(collecteID, req.BenevoleID); err != nil {
-		log.Printf("❌ Erreur confirmation bénévole collecte %d: %v", collecteID, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

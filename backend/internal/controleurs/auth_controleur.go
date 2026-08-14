@@ -2,10 +2,11 @@ package controleurs
 
 import (
 	"encoding/json"
-	"log"
+	"errors"
 	"net/http"
 
 	"nomorewaste/internal/modeles"
+	"nomorewaste/internal/repositories"
 	"nomorewaste/internal/services"
 )
 
@@ -20,21 +21,23 @@ func NouveauAuthControleur(service *services.AuthService) *AuthControleur {
 func (c *AuthControleur) Login(w http.ResponseWriter, r *http.Request) {
 	var req modeles.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("❌ Erreur de décodage JSON: %v", err)
 		http.Error(w, "Requête invalide", http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("🔐 Tentative de login: email=%s, mot_de_passe=%s", req.Email, req.MotDePasse)
-
 	user, err := c.service.Login(&req)
 	if err != nil {
-		log.Printf("❌ Échec de l'authentification: %v", err)
+		if errors.Is(err, repositories.ErrCompteEnAttente) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "Votre inscription est encore en cours d'étude par nos équipes. Vous pourrez vous connecter dès qu'elle sera validée.",
+			})
+			return
+		}
 		http.Error(w, "Identifiants incorrects", http.StatusUnauthorized)
 		return
 	}
-
-	log.Printf("✅ Authentification réussie pour %s (id=%d)", user.Email, user.ID)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{

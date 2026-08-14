@@ -15,6 +15,7 @@ type Config struct {
     DBPassword string
     DBName     string
     APIPort    string
+    LogoPath   string
 }
 
 func ChargerConfig() *Config {
@@ -29,6 +30,7 @@ func ChargerConfig() *Config {
         DBPassword: getEnv("DB_PASSWORD", "root"),
         DBName:     getEnv("DB_NAME", "nomorewaste"),
         APIPort:    getEnv("API_PORT", "8081"),
+        LogoPath:   getEnv("LOGO_PATH", "../assets/logo.png"),
     }
 }
 

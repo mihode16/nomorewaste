@@ -18,7 +18,7 @@ class ServicesPublicControleur extends Controleur
         $services = $this->apiClient->get('/api/services');
         $plannings = $this->apiClient->get('/api/service-plannings');
 
-        $this->rendre('front/contenu/services', [
+        $this->rendre('frontoffice/contenu/services', [
             'titre' => __('services_title'),
             'services' => ($services['code'] === 200 && is_array($services['data'])) ? $services['data'] : [],
             'plannings' => ($plannings['code'] === 200 && is_array($plannings['data'])) ? $plannings['data'] : [],

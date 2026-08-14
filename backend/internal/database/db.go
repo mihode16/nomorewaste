@@ -12,8 +12,7 @@ import (
 
 var DB *sql.DB
 
-func Connecter() error {
-	config := config.ChargerConfig()
+func Connecter(config *config.Config) error {
 	dsn := config.GetDSN()
 
 	var err error

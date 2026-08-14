@@ -4,13 +4,11 @@ import (
 	"errors"
 	"math/rand"
 	"strconv"
-	"time"
 )
 
 // GenerateEAN13 génère un code EAN-13 valide et unique.
 // La fonction existsFunc vérifie si le code existe déjà en base.
 func GenerateEAN13(existsFunc func(string) (bool, error)) (string, error) {
-	rand.Seed(time.Now().UnixNano())
 	prefix := "376"
 	maxAttempts := 30
 

@@ -14,7 +14,7 @@ func ParseDateTime(s string) (time.Time, error) {
 	var err error
 	for _, f := range formats {
 		var t time.Time
-		t, err = time.Parse(f, s)
+		t, err = time.ParseInLocation(f, s, time.Local)
 		if err == nil {
 			return t, nil
 		}

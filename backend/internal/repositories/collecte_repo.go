@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"database/sql"
-	"log"
+	"errors"
 	"time"
 
 	"nomorewaste/internal/modeles"
@@ -38,7 +38,7 @@ func (r *CollecteRepository) Creer(collecte *modeles.CollecteCreation) (int, err
 	return int(id), nil
 }
 
-func (r *CollecteRepository) TrouverTous(commercant, statut, dateDebut, dateFin string) ([]modeles.Collecte, error) {
+func (r *CollecteRepository) TrouverTous(commercant, statut, dateDebut, dateFin string, commercantID int) ([]modeles.Collecte, error) {
 	query := `
 		SELECT c.id, c.date_heure_collecte, c.adresse_collecte, c.statut, c.commentaire, c.commercant_id, c.validee, c.nb_benevoles,
 		       u.id, u.email, u.nom, u.prenom, u.telephone, u.adresse, u.date_inscription, u.est_actif,
@@ -50,6 +50,10 @@ func (r *CollecteRepository) TrouverTous(commercant, statut, dateDebut, dateFin 
 	`
 	var args []interface{}
 
+	if commercantID > 0 {
+		query += " AND c.commercant_id = ?"
+		args = append(args, commercantID)
+	}
 	if commercant != "" {
 		query += " AND (u.nom LIKE ? OR u.prenom LIKE ? OR cm.raison_sociale LIKE ?)"
 		like := "%" + commercant + "%"
@@ -69,8 +73,6 @@ func (r *CollecteRepository) TrouverTous(commercant, statut, dateDebut, dateFin 
 	}
 
 	query += " ORDER BY c.date_heure_collecte DESC"
-
-	log.Printf("🔍 Requête collectes: %s, args: %v", query, args)
 
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
@@ -177,8 +179,8 @@ func (r *CollecteRepository) TrouverBenevolesPourCollecte(collecteID int) ([]mod
 		if dateConf.Valid {
 			cb.DateConfirmation = &dateConf.Time
 		}
-		// BenevoleNom et BenevolePrenom doivent être ajoutés dans le modèle
-		// Si vous ne les avez pas, vous pouvez les ignorer.
+		cb.BenevoleNom = nom.String
+		cb.BenevolePrenom = prenom.String
 		list = append(list, cb)
 	}
 	return list, nil
@@ -198,6 +200,30 @@ func (r *CollecteRepository) AjouterBenevole(collecteID, benevoleID int) error {
 	}
 	_, err = r.db.Exec(`UPDATE collecte SET nb_benevoles = nb_benevoles + 1 WHERE id = ?`, collecteID)
 	return err
+}
+
+func (r *CollecteRepository) SupprimerBenevole(collecteID, benevoleID int) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	res, err := tx.Exec(`DELETE FROM collecte_benevole WHERE collecte_id = ? AND benevole_id = ?`, collecteID, benevoleID)
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return errors.New("bénévole non associé à cette collecte")
+	}
+	if _, err := tx.Exec(`UPDATE collecte SET nb_benevoles = GREATEST(nb_benevoles - 1, 0) WHERE id = ?`, collecteID); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 func (r *CollecteRepository) ConfirmerBenevole(collecteID, benevoleID int) error {

@@ -6,6 +6,7 @@ import (
 
 	"nomorewaste/internal/modeles"
 	"nomorewaste/internal/repositories"
+	"nomorewaste/internal/utils"
 )
 
 type CommercantService struct {
@@ -30,6 +31,15 @@ func (s *CommercantService) Creer(commercant *modeles.CommercantCreation) (int, 
     if commercant.RaisonSociale == "" {
         return 0, errors.New("la raison sociale est requise")
     }
+    if err := utils.ValiderComplexiteMotDePasse(commercant.MotDePasse); err != nil {
+        return 0, err
+    }
+
+    hache, err := utils.HacherMotDePasse(commercant.MotDePasse)
+    if err != nil {
+        return 0, err
+    }
+    commercant.MotDePasse = hache
 
     return s.repo.Creer(commercant)
 }
@@ -84,7 +94,14 @@ func (s *CommercantService) RenouvelerAdhesion(id int, dureeMois int) error {
         return errors.New("commerçant non trouvé")
     }
 
-    nouvelleDateFin := time.Now().AddDate(0, dureeMois, 0)
+    // Le renouvellement prolonge l'adhésion à partir de sa date de fin actuelle
+    // (tant qu'elle n'est pas déjà expirée) plutôt que de repartir toujours d'aujourd'hui,
+    // sinon renouveler une adhésion encore valide ne fait presque pas bouger sa date de fin.
+    base := existant.DateFinAdhesion
+    if base.Before(time.Now()) {
+        base = time.Now()
+    }
+    nouvelleDateFin := base.AddDate(0, dureeMois, 0)
     return s.repo.RenouvelerAdhesion(id, nouvelleDateFin)
 }
 

@@ -1,4 +1,10 @@
 <?php
+/**
+ * @var string $titre
+ * @var string $pageActive
+ * @var array $commercant
+ */
+
 $c = $commercant;
 ?>
 <div class="d-flex justify-content-between align-items-center mb-4">

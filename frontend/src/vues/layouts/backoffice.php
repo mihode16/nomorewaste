@@ -1,5 +1,8 @@
 <?php
 $pageActive = $pageActive ?? '';
+$__clientApiBadge = new ClientApi();
+$__nonLusReponse = $__clientApiBadge->get('/api/conversations/non-lus', ['role' => 'admin']);
+$nbMessagesNonLus = ($__nonLusReponse['code'] === 200) ? (int)($__nonLusReponse['data']['non_lus'] ?? 0) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -22,7 +25,10 @@ $pageActive = $pageActive ?? '';
         <div class="col-md-2 sidebar p-0">
             <div class="p-3 d-flex align-items-center">
                 <img src="/nomorewaste/assets/logo.png" style="height:55px; object-fit:cover; border-radius: 11px; margin-right:10px;">
-                <h4 class="text-white mb-0">NO MORE WASTE</h4>
+                <div>
+                    <h4 class="text-white mb-0 notranslate">NO MORE WASTE</h4>
+                    <small class="text-white-50">Interface admin</small>
+                </div>
             </div>
             <nav class="nav flex-column">
                 <a href="<?php echo url('/admin/dashboard'); ?>" class="nav-link <?php echo $pageActive === 'dashboard' ? 'active' : ''; ?>">
@@ -30,6 +36,9 @@ $pageActive = $pageActive ?? '';
                 </a>
                 <a href="<?php echo url('/admin/commercants'); ?>" class="nav-link <?php echo $pageActive === 'commercants' ? 'active' : ''; ?>">
                     <i class="bi bi-shop"></i> Commerçants
+                </a>
+                <a href="<?php echo url('/admin/adherents'); ?>" class="nav-link <?php echo $pageActive === 'adherents' ? 'active' : ''; ?>">
+                    <i class="bi bi-person-badge"></i> Adhérents
                 </a>
                 <a href="<?php echo url('/admin/collectes'); ?>" class="nav-link <?php echo $pageActive === 'collectes' ? 'active' : ''; ?>">
                     <i class="bi bi-truck"></i> Collectes
@@ -46,13 +55,25 @@ $pageActive = $pageActive ?? '';
                 <a href="<?php echo url('/admin/services'); ?>" class="nav-link <?php echo $pageActive === 'services' ? 'active' : ''; ?>">
                     <i class="bi bi-calendar-event"></i> Services
                 </a>
+                <a href="<?php echo url('/admin/administrateurs'); ?>" class="nav-link <?php echo $pageActive === 'administrateurs' ? 'active' : ''; ?>">
+                    <i class="bi bi-shield-lock"></i> Comptes admin
+                </a>
+                <a href="<?php echo url('/admin/messages'); ?>" class="nav-link d-flex align-items-center <?php echo $pageActive === 'messages' ? 'active' : ''; ?>">
+                    <i class="bi bi-envelope"></i>&nbsp; Messages
+                    <?php if ($nbMessagesNonLus > 0): ?>
+                        <span class="badge bg-danger rounded-pill ms-2"><?php echo $nbMessagesNonLus; ?></span>
+                    <?php endif; ?>
+                </a>
                 <hr class="border-light">
-                <a href="<?php echo url('/admin/logout'); ?>" class="nav-link text-danger">
+                <a href="<?php echo url('/deconnexion'); ?>" class="nav-link text-danger">
                     <i class="bi bi-box-arrow-right"></i> Déconnexion
                 </a>
             </nav>
         </div>
         <div class="col-md-10 p-4">
+            <div class="d-flex justify-content-end mb-3">
+                <?php require __DIR__ . '/../partials/traduction_selecteur.php'; ?>
+            </div>
             <?php if (isset($_SESSION['flash'])): ?>
                 <div class="alert alert-<?php echo htmlspecialchars($_SESSION['flash']['type']); ?> alert-dismissible fade show">
                     <?php echo htmlspecialchars($_SESSION['flash']['message']); ?>
@@ -65,5 +86,6 @@ $pageActive = $pageActive ?? '';
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<?php require __DIR__ . '/../partials/traduction_widget.php'; ?>
 </body>
 </html>

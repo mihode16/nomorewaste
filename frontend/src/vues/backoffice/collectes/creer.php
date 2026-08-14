@@ -1,4 +1,10 @@
-<?php include __DIR__ . '/../../layouts/entete.php'; ?>
+<?php
+/**
+ * @var string $titre
+ * @var string $pageActive
+ * @var array $commercants
+ */
+include __DIR__ . '/../../layouts/entete.php'; ?>
 
 <div class="container-fluid">
     <div class="row">

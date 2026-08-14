@@ -3,7 +3,6 @@ package repositories
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	"nomorewaste/internal/modeles"
 	"nomorewaste/internal/utils"
@@ -26,10 +25,24 @@ func (r *ProduitRepository) Creer(p *modeles.ProduitCreation) (int, error) {
 	if qty <= 0 {
 		qty = 1
 	}
+
+	// Tant que la collecte associée n'est pas validée ET terminée, le produit n'est pas
+	// encore physiquement en stock : il reste "À venir". Un produit sans collecte (ajout
+	// manuel direct) est considéré déjà en stock.
+	statut := "Stocké"
+	if p.CollecteID > 0 {
+		var validee bool
+		var statutCollecte string
+		err := r.db.QueryRow(`SELECT validee, statut FROM collecte WHERE id = ?`, p.CollecteID).Scan(&validee, &statutCollecte)
+		if err != nil || !validee || statutCollecte != "Terminée" {
+			statut = "À venir"
+		}
+	}
+
 	result, err := r.db.Exec(`
-		INSERT INTO produit (code_barre, nom, categorie, quantite, date_peremption, collecte_id)
-		VALUES (?, ?, ?, ?, ?, ?)
-	`, p.CodeBarre, p.Nom, p.Categorie, qty, p.DatePeremption, p.CollecteID)
+		INSERT INTO produit (code_barre, nom, categorie, quantite, date_peremption, collecte_id, statut)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+	`, p.CodeBarre, p.Nom, p.Categorie, qty, p.DatePeremption, p.CollecteID, statut)
 	if err != nil {
 		return 0, err
 	}
@@ -37,13 +50,30 @@ func (r *ProduitRepository) Creer(p *modeles.ProduitCreation) (int, error) {
 	return int(id), nil
 }
 
+// scanProduit lit une ligne produit en gérant collecte_id qui peut être NULL en base
+// (ex : après suppression d'une collecte via ON DELETE SET NULL).
+func scanProduit(scanner interface {
+	Scan(dest ...interface{}) error
+}, p *modeles.Produit) error {
+	var collecteID sql.NullInt64
+	if err := scanner.Scan(&p.ID, &p.CodeBarre, &p.Nom, &p.Categorie, &p.Quantite, &p.DatePeremption, &p.DateEntreeStock, &p.Statut, &collecteID); err != nil {
+		return err
+	}
+	if collecteID.Valid {
+		p.CollecteID = int(collecteID.Int64)
+	} else {
+		p.CollecteID = 0
+	}
+	return nil
+}
+
 func (r *ProduitRepository) TrouverParCodeBarre(code string) (*modeles.Produit, error) {
 	var p modeles.Produit
-	err := r.db.QueryRow(`
+	row := r.db.QueryRow(`
 		SELECT id, code_barre, nom, categorie, quantite, date_peremption, date_entree_stock, statut, collecte_id
 		FROM produit WHERE code_barre = ?
-	`, code).Scan(&p.ID, &p.CodeBarre, &p.Nom, &p.Categorie, &p.Quantite, &p.DatePeremption, &p.DateEntreeStock, &p.Statut, &p.CollecteID)
-	if err != nil {
+	`, code)
+	if err := scanProduit(row, &p); err != nil {
 		return nil, err
 	}
 	return &p, nil
@@ -77,8 +107,6 @@ func (r *ProduitRepository) TrouverTous(search, categorie, statut, tri string) (
 		query += ` ORDER BY date_entree_stock DESC`
 	}
 
-	log.Printf("🔍 Requête produits: %s, args: %v", query, args)
-
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		return nil, err
@@ -88,7 +116,7 @@ func (r *ProduitRepository) TrouverTous(search, categorie, statut, tri string) (
 	var list []modeles.Produit
 	for rows.Next() {
 		var p modeles.Produit
-		if err := rows.Scan(&p.ID, &p.CodeBarre, &p.Nom, &p.Categorie, &p.Quantite, &p.DatePeremption, &p.DateEntreeStock, &p.Statut, &p.CollecteID); err != nil {
+		if err := scanProduit(rows, &p); err != nil {
 			return nil, err
 		}
 		list = append(list, p)
@@ -98,11 +126,11 @@ func (r *ProduitRepository) TrouverTous(search, categorie, statut, tri string) (
 
 func (r *ProduitRepository) TrouverParID(id int) (*modeles.Produit, error) {
 	var p modeles.Produit
-	err := r.db.QueryRow(`
+	row := r.db.QueryRow(`
 		SELECT id, code_barre, nom, categorie, quantite, date_peremption, date_entree_stock, statut, collecte_id
 		FROM produit WHERE id = ?
-	`, id).Scan(&p.ID, &p.CodeBarre, &p.Nom, &p.Categorie, &p.Quantite, &p.DatePeremption, &p.DateEntreeStock, &p.Statut, &p.CollecteID)
-	if err != nil {
+	`, id)
+	if err := scanProduit(row, &p); err != nil {
 		return nil, err
 	}
 	return &p, nil
@@ -159,7 +187,7 @@ func (r *ProduitRepository) TrouverParCollecteID(collecteID int) ([]modeles.Prod
 	var produits []modeles.Produit
 	for rows.Next() {
 		var p modeles.Produit
-		if err := rows.Scan(&p.ID, &p.CodeBarre, &p.Nom, &p.Categorie, &p.Quantite, &p.DatePeremption, &p.DateEntreeStock, &p.Statut, &p.CollecteID); err != nil {
+		if err := scanProduit(rows, &p); err != nil {
 			return nil, err
 		}
 		produits = append(produits, p)
@@ -184,7 +212,7 @@ func (r *ProduitRepository) ListerCategories() ([]string, error) {
     return categories, nil
 }
 
-func (r *ProduitRepository) TrouverTousFiltres(recherche, categorie, tri string) ([]modeles.Produit, error) {
+func (r *ProduitRepository) TrouverTousFiltres(recherche, categorie, statut, tri string) ([]modeles.Produit, error) {
     query := `SELECT id, code_barre, nom, categorie, quantite, date_peremption, date_entree_stock, statut, collecte_id FROM produit WHERE 1=1`
     var args []interface{}
     if recherche != "" {
@@ -195,6 +223,10 @@ func (r *ProduitRepository) TrouverTousFiltres(recherche, categorie, tri string)
     if categorie != "" {
         query += ` AND categorie = ?`
         args = append(args, categorie)
+    }
+    if statut != "" {
+        query += ` AND statut = ?`
+        args = append(args, statut)
     }
     switch tri {
     case "date_peremption_asc":
@@ -214,7 +246,7 @@ func (r *ProduitRepository) TrouverTousFiltres(recherche, categorie, tri string)
     var list []modeles.Produit
     for rows.Next() {
         var p modeles.Produit
-        if err := rows.Scan(&p.ID, &p.CodeBarre, &p.Nom, &p.Categorie, &p.Quantite, &p.DatePeremption, &p.DateEntreeStock, &p.Statut, &p.CollecteID); err != nil {
+        if err := scanProduit(rows, &p); err != nil {
             return nil, err
         }
         list = append(list, p)

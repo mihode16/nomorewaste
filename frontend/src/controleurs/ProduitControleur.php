@@ -19,6 +19,7 @@ class ProduitControleur extends Controleur
 
         $recherche = $this->getParam('recherche', '');
         $categorie = $this->getParam('categorie', '');
+        $statut = $this->getParam('statut', '');
         $tri = $this->getParam('tri', 'date_peremption_asc');
 
         $categoriesResponse = $this->apiClient->get('/api/produits/categories');
@@ -27,6 +28,7 @@ class ProduitControleur extends Controleur
         $query = http_build_query(array_filter([
             'recherche' => $recherche,
             'categorie' => $categorie,
+            'statut' => $statut,
             'tri' => $tri,
         ]));
         $endpoint = '/api/produits' . ($query ? '?' . $query : '');
@@ -40,6 +42,7 @@ class ProduitControleur extends Controleur
             'produits' => $produits,
             'filtre_recherche' => $recherche,
             'filtre_categorie' => $categorie,
+            'filtre_statut' => $statut,
             'filtre_tri' => $tri,
             'categories' => $categories,
         ]);
@@ -65,22 +68,6 @@ class ProduitControleur extends Controleur
         }
 
         $collecteId = (int)$this->getParam('collecte_id', 0);
-
-        if ($collecteId > 0) {
-            $collecteResponse = $this->apiClient->get('/api/collectes/' . $collecteId);
-            if ($collecteResponse['code'] === 200) {
-                $collecte = $collecteResponse['data'];
-                if (empty($collecte['validee']) || ($collecte['statut'] ?? '') !== 'Terminée') {
-                    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Impossible d\'ajouter un produit : la collecte doit être validée et terminée.'];
-                    $this->rediriger('/admin/collectes/' . $collecteId);
-                    return;
-                }
-            } else {
-                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Collecte introuvable.'];
-                $this->rediriger('/admin/collectes');
-                return;
-            }
-        }
 
         $data = [
             'code_barre' => $this->getParam('code_barre', ''),
@@ -146,10 +133,14 @@ class ProduitControleur extends Controleur
     public function supprimer(int $id): void
     {
         $this->verifierAuthentification();
+        $retour = $this->getParam('retour', '/admin/produits');
+        if (!preg_match('#^/admin/(produits|collectes(/\d+)?)$#', $retour)) {
+            $retour = '/admin/produits';
+        }
         if ($this->estPost()) {
             $this->apiClient->delete('/api/produits/' . $id);
             $_SESSION['flash'] = ['type' => 'success', 'message' => 'Produit supprimé'];
         }
-        $this->rediriger('/admin/produits');
+        $this->rediriger($retour);
     }
 }

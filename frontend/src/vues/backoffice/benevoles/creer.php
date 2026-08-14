@@ -1,3 +1,10 @@
+<?php
+/**
+ * @var string $titre
+ * @var string $pageActive
+ * @var array $competences
+ */
+?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?php echo htmlspecialchars($titre); ?></h2>
     <a href="<?php echo url('/admin/benevoles'); ?>" class="btn btn-secondary">Retour</a>

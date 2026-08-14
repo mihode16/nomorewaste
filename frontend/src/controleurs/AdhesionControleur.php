@@ -15,7 +15,7 @@ class AdhesionControleur extends Controleur
 
     public function index(): void
     {
-        $this->rendre('front/contenu/adhesion', [
+        $this->rendre('frontoffice/contenu/adhesion', [
             'titre' => __('adhesion_title'),
         ], 'front');
     }
@@ -41,14 +41,15 @@ class AdhesionControleur extends Controleur
 
         if ($response['code'] === 201 || $response['code'] === 200) {
             $_SESSION['flash'] = ['type' => 'success', 'message' => __('adhesion_success')];
-        } else {
-            $erreur = $response['data']['error'] ?? __('adhesion_error');
-            if (is_string($response['data']) && $response['data'] !== '') {
-                $erreur = $response['data'];
-            }
-            $_SESSION['flash'] = ['type' => 'danger', 'message' => $erreur];
+            $this->rediriger('/');
+            return;
         }
 
+        $erreur = $response['data']['error'] ?? __('adhesion_error');
+        if (is_string($response['data']) && $response['data'] !== '') {
+            $erreur = $response['data'];
+        }
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => $erreur];
         $this->rediriger('/adherer');
     }
 }

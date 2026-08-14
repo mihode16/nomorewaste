@@ -51,8 +51,8 @@ func (s *ProduitService) Creer(p *modeles.ProduitCreation) (int, error) {
 	return s.repo.Creer(p)
 }
 
-func (s *ProduitService) Lister(recherche, categorie, tri string) ([]modeles.Produit, error) {
-    return s.repo.TrouverTousFiltres(recherche, categorie, tri)
+func (s *ProduitService) Lister(recherche, categorie, statut, tri string) ([]modeles.Produit, error) {
+    return s.repo.TrouverTousFiltres(recherche, categorie, statut, tri)
 }
 
 func (s *ProduitService) ListerCategories() ([]string, error) {

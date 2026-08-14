@@ -39,8 +39,9 @@ func (c *ProduitControleur) Creer(w http.ResponseWriter, r *http.Request) {
 func (c *ProduitControleur) Lister(w http.ResponseWriter, r *http.Request) {
     recherche := r.URL.Query().Get("recherche")
     categorie := r.URL.Query().Get("categorie")
+    statut := r.URL.Query().Get("statut")
     tri := r.URL.Query().Get("tri")
-    list, err := c.service.Lister(recherche, categorie, tri)
+    list, err := c.service.Lister(recherche, categorie, statut, tri)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return

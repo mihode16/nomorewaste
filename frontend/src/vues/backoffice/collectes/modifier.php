@@ -1,4 +1,11 @@
-<?php include __DIR__ . '/../../layouts/entete.php'; ?>
+<?php
+/**
+ * @var string $titre
+ * @var string $pageActive
+ * @var array $collecte
+ * @var array $commercants
+ */
+include __DIR__ . '/../../layouts/entete.php'; ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?php echo htmlspecialchars($titre); ?></h2>

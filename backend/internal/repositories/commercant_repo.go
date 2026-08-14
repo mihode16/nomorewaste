@@ -3,7 +3,6 @@ package repositories
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	"nomorewaste/internal/modeles"
@@ -24,6 +23,14 @@ func (r *CommercantRepository) Creer(commercant *modeles.CommercantCreation) (in
 	}
 	defer tx.Rollback()
 
+	var nbExistants int
+	if err = tx.QueryRow(`SELECT COUNT(*) FROM utilisateur WHERE email = ?`, commercant.Email).Scan(&nbExistants); err != nil {
+		return 0, err
+	}
+	if nbExistants > 0 {
+		return 0, ErrEmailExiste
+	}
+
 	// Insérer dans utilisateur
 	result, err := tx.Exec(`
 		INSERT INTO utilisateur (email, mot_de_passe, nom, prenom, telephone, adresse, type_utilisateur)
@@ -31,7 +38,6 @@ func (r *CommercantRepository) Creer(commercant *modeles.CommercantCreation) (in
 	`, commercant.Email, commercant.MotDePasse, commercant.Nom, commercant.Prenom,
 		commercant.Telephone, commercant.Adresse)
 	if err != nil {
-		log.Printf("❌ Erreur insertion utilisateur: %v", err)
 		return 0, err
 	}
 
@@ -43,12 +49,10 @@ func (r *CommercantRepository) Creer(commercant *modeles.CommercantCreation) (in
 	// Parse des dates
 	dateDebut, err := time.Parse("2006-01-02", commercant.DateDebutAdhesion)
 	if err != nil {
-		log.Printf("❌ Erreur parse date début: %v", err)
 		return 0, err
 	}
 	dateFin, err := time.Parse("2006-01-02", commercant.DateFinAdhesion)
 	if err != nil {
-		log.Printf("❌ Erreur parse date fin: %v", err)
 		return 0, err
 	}
 
@@ -58,7 +62,6 @@ func (r *CommercantRepository) Creer(commercant *modeles.CommercantCreation) (in
 	`, id, commercant.Siret, commercant.RaisonSociale, commercant.TypeCommerce,
 		dateDebut, dateFin, commercant.EstRenouveleAutomatiquement, "en_attente", 0)
 	if err != nil {
-		log.Printf("❌ Erreur insertion commercant: %v", err)
 		return 0, err
 	}
 

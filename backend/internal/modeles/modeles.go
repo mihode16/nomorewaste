@@ -78,6 +78,30 @@ type BenevoleCandidature struct {
     Statut string `json:"statut"`
 }
 
+type BenevoleMiseAJour struct {
+    Nom       string `json:"nom"`
+    Prenom    string `json:"prenom"`
+    Telephone string `json:"telephone"`
+    Adresse   string `json:"adresse"`
+}
+
+// ============================================================
+// PLANNING_BENEVOLE (export Excel du planning d'un bénévole)
+// ============================================================
+type PlanningBenevole struct {
+    ID             int       `json:"id"`
+    BenevoleID     int       `json:"benevole_id"`
+    DateDebut      time.Time `json:"date_debut"`
+    DateFin        time.Time `json:"date_fin"`
+    DateGeneration time.Time `json:"date_generation"`
+}
+
+type PlanningBenevoleCreation struct {
+    BenevoleID int    `json:"benevole_id"`
+    DateDebut  string `json:"date_debut"`
+    DateFin    string `json:"date_fin"`
+}
+
 // ============================================================
 // COMPETENCE
 // ============================================================
@@ -91,11 +115,14 @@ type Competence struct {
 // DISPONIBILITE
 // ============================================================
 type Disponibilite struct {
-    ID          int       `json:"id"`
-    BenevoleID  int       `json:"benevole_id"`
-    JourSemaine string    `json:"jour_semaine"`
-    HeureDebut  string    `json:"heure_debut"`
-    HeureFin    string    `json:"heure_fin"`
+    ID             int    `json:"id"`
+    BenevoleID     int    `json:"benevole_id"`
+    JourSemaine    string `json:"jour_semaine"`
+    Date           string `json:"date"` // date précise (YYYY-MM-DD) de la semaine courante ou suivante
+    HeureDebut     string `json:"heure_debut"`
+    HeureFin       string `json:"heure_fin"`
+    BenevoleNom    string `json:"benevole_nom,omitempty"`
+    BenevolePrenom string `json:"benevole_prenom,omitempty"`
 }
 
 // ============================================================
@@ -164,24 +191,50 @@ type ProduitCreation struct {
 // TOURNEE
 // ============================================================
 type Tournee struct {
-    ID                int       `json:"id"`
-    DateHeureDepart   time.Time `json:"date_heure_depart"`
-    DateHeureFin      *time.Time `json:"date_heure_fin,omitempty"`
-    AdresseDepart     string    `json:"adresse_depart"`
-    Statut            string    `json:"statut"`
-    BenevoleID        int       `json:"benevole_id"`
-    LieuDistributionID int      `json:"lieu_distribution_id"`
-    Benevole          *Benevole `json:"benevole,omitempty"`
-    LieuDistribution  *LieuDistribution `json:"lieu_distribution,omitempty"`
-    Produits          []Produit `json:"produits,omitempty"`
+    ID                        int        `json:"id"`
+    DateHeureDepart           time.Time  `json:"date_heure_depart"`
+    DateHeureFin              *time.Time `json:"date_heure_fin,omitempty"`
+    AdresseDepart             string     `json:"adresse_depart"`
+    Statut                    string     `json:"statut"`
+    BenevoleID                int        `json:"benevole_id"`
+    LieuDistributionID        int        `json:"lieu_distribution_id"`
+    ChauffeurConfirme         bool       `json:"chauffeur_confirme"`
+    DateConfirmationChauffeur *time.Time `json:"date_confirmation_chauffeur,omitempty"`
+    Benevole                  *Benevole  `json:"benevole,omitempty"`
+    LieuDistribution          *LieuDistribution `json:"lieu_distribution,omitempty"`
+    Produits                  []Produit  `json:"produits,omitempty"`
+    Benevoles                 []Benevole `json:"benevoles,omitempty"` // bénévoles supplémentaires
+    BenevolesConfirmation     []TourneeBenevole `json:"benevoles_confirmation,omitempty"` // statut de confirmation des bénévoles supplémentaires
+}
+
+// TourneeBenevole représente la confirmation de fin de tournée par un bénévole supplémentaire
+type TourneeBenevole struct {
+    ID                int        `json:"id"`
+    TourneeID         int        `json:"tournee_id"`
+    BenevoleID        int        `json:"benevole_id"`
+    Confirme          bool       `json:"confirme"`
+    DateConfirmation  *time.Time `json:"date_confirmation,omitempty"`
+    BenevoleNom       string     `json:"benevole_nom,omitempty"`
+    BenevolePrenom    string     `json:"benevole_prenom,omitempty"`
 }
 
 type TourneeCreation struct {
-    DateHeureDepart   string `json:"date_heure_depart"`
-    AdresseDepart     string `json:"adresse_depart"`
-    BenevoleID        int    `json:"benevole_id"`
-    LieuDistributionID int   `json:"lieu_distribution_id"`
-    ProduitsIDs       []int  `json:"produits_ids"`
+    DateHeureDepart    string `json:"date_heure_depart"`
+    AdresseDepart      string `json:"adresse_depart"`
+    BenevoleID         int    `json:"benevole_id"`
+    LieuDistributionID int    `json:"lieu_distribution_id"`
+    ProduitsIDs        []int  `json:"produits_ids"`
+    BenevolesIDs       []int  `json:"benevoles_ids"` // bénévoles supplémentaires
+}
+
+type TourneeUpdate struct {
+    ID                 int    `json:"id"`
+    DateHeureDepart    string `json:"date_heure_depart"`
+    AdresseDepart      string `json:"adresse_depart"`
+    BenevoleID         int    `json:"benevole_id"`
+    LieuDistributionID int    `json:"lieu_distribution_id"`
+    ProduitsIDs        []int  `json:"produits_ids"`
+    BenevolesIDs       []int  `json:"benevoles_ids"`
 }
 
 // ============================================================
@@ -200,10 +253,21 @@ type LieuDistribution struct {
 // SERVICE
 // ============================================================
 type Service struct {
-    ID          int    `json:"id"`
-    Nom         string `json:"nom"`
-    Description string `json:"description"`
-    Type        string `json:"type"`
+    ID          int          `json:"id"`
+    Nom         string       `json:"nom"`
+    Description string       `json:"description"`
+    Type        string       `json:"type"`
+    Competences []Competence `json:"competences,omitempty"`
+}
+
+// ServiceCreation : NouvelleCompetence facultatif — s'il est renseigné, une compétence est
+// créée et associée au service en même temps que sa création.
+type ServiceCreation struct {
+    Nom                    string `json:"nom"`
+    Description            string `json:"description"`
+    Type                   string `json:"type"`
+    NouvelleCompetence     string `json:"nouvelle_competence"`
+    DescriptionCompetence  string `json:"description_competence"`
 }
 
 // ============================================================
@@ -219,6 +283,7 @@ type ServicePlanning struct {
     BenevoleID     int       `json:"benevole_id"`
     Service        *Service  `json:"service,omitempty"`
     Benevole       *Benevole `json:"benevole,omitempty"`
+    NbInscrits     int       `json:"nb_inscrits"`
 }
 
 type ServicePlanningCreation struct {
@@ -229,27 +294,97 @@ type ServicePlanningCreation struct {
     BenevoleID     int    `json:"benevole_id"`
 }
 
+type ServicePlanningUpdate struct {
+    ID             int    `json:"id"`
+    DateHeureDebut string `json:"date_heure_debut"`
+    DateHeureFin   string `json:"date_heure_fin"`
+    CapaciteMax    int    `json:"capacite_max"`
+    ServiceID      int    `json:"service_id"`
+    BenevoleID     int    `json:"benevole_id"`
+    Statut         string `json:"statut"`
+}
+
 // ============================================================
 // ADHERENT
 // ============================================================
 type Adherent struct {
     Utilisateur
-    DateDebutAdhesion time.Time `json:"date_debut_adhesion"`
-    DateFinAdhesion   time.Time `json:"date_fin_adhesion"`
+    DateDebutAdhesion           time.Time `json:"date_debut_adhesion"`
+    DateFinAdhesion             time.Time `json:"date_fin_adhesion"`
+    StatutAdhesion              string    `json:"statut_adhesion"`
+    DemandeRenouvellement       bool      `json:"demande_renouvellement"`
+    EstRenouveleAutomatiquement bool      `json:"est_renouvele_automatiquement"`
 }
 
 type AdherentCreation struct {
-    Email             string `json:"email"`
-    MotDePasse        string `json:"mot_de_passe"`
-    Nom               string `json:"nom"`
-    Prenom            string `json:"prenom"`
-    Telephone         string `json:"telephone"`
-    Adresse           string `json:"adresse"`
-    DateDebutAdhesion string `json:"date_debut_adhesion"`
-    DateFinAdhesion   string `json:"date_fin_adhesion"`
+    Email                       string `json:"email"`
+    MotDePasse                  string `json:"mot_de_passe"`
+    Nom                         string `json:"nom"`
+    Prenom                      string `json:"prenom"`
+    Telephone                   string `json:"telephone"`
+    Adresse                     string `json:"adresse"`
+    DateDebutAdhesion           string `json:"date_debut_adhesion"`
+    DateFinAdhesion             string `json:"date_fin_adhesion"`
+    EstRenouveleAutomatiquement bool   `json:"est_renouvele_automatiquement"`
 }
 
 type LoginRequest struct {
     Email      string `json:"email"`
     MotDePasse string `json:"mot_de_passe"`
+}
+
+// ============================================================
+// CONVERSATION / MESSAGE
+// ============================================================
+
+// ParticipantConversation résume l'auteur d'une conversation ou d'un message (nom/prénom +
+// éléments d'affichage propres à son profil, ex. raison sociale pour un commerçant).
+type ParticipantConversation struct {
+    ID              int    `json:"id"`
+    Nom             string `json:"nom"`
+    Prenom          string `json:"prenom"`
+    TypeUtilisateur string `json:"type_utilisateur"`
+    RaisonSociale   string `json:"raison_sociale,omitempty"`
+}
+
+type Conversation struct {
+    ID             int                       `json:"id"`
+    Type           string                    `json:"type"` // "admin" ou "pair"
+    InitiateurID   int                       `json:"initiateur_id"`
+    DestinataireID *int                      `json:"destinataire_id,omitempty"`
+    CollecteID     *int                      `json:"collecte_id,omitempty"`
+    Sujet          string                    `json:"sujet"`
+    Cloturee       bool                      `json:"cloturee"`
+    DateCreation   time.Time                 `json:"date_creation"`
+    DateCloture    *time.Time                `json:"date_cloture,omitempty"`
+    Initiateur     *ParticipantConversation  `json:"initiateur,omitempty"`
+    Destinataire   *ParticipantConversation  `json:"destinataire,omitempty"`
+    Messages       []Message                 `json:"messages,omitempty"`
+    NbNonLus       int                       `json:"nb_non_lus"`
+}
+
+// ConversationCreation : Type="admin" ouvre une discussion avec l'association (DestinataireID
+// ignoré) ; Type="pair" ouvre une messagerie privée entre deux adhérents (DestinataireID requis).
+type ConversationCreation struct {
+    Type           string `json:"type"`
+    InitiateurID   int    `json:"initiateur_id"`
+    DestinataireID int    `json:"destinataire_id"`
+    CollecteID     int    `json:"collecte_id"`
+    Sujet          string `json:"sujet"`
+    Contenu        string `json:"contenu"`
+}
+
+type Message struct {
+    ID             int                       `json:"id"`
+    ConversationID int                       `json:"conversation_id"`
+    ExpediteurID   int                       `json:"expediteur_id"`
+    Expediteur     *ParticipantConversation  `json:"expediteur,omitempty"`
+    Contenu        string                    `json:"contenu"`
+    DateEnvoi      time.Time                 `json:"date_envoi"`
+    Lu             bool                      `json:"lu"`
+}
+
+type MessageCreation struct {
+    ExpediteurID int    `json:"expediteur_id"`
+    Contenu      string `json:"contenu"`
 }

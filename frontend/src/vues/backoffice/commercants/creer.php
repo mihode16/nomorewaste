@@ -1,3 +1,9 @@
+<?php
+/**
+ * @var string $titre
+ * @var string $pageActive
+ */
+?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?php echo htmlspecialchars($titre); ?></h2>
     <a href="<?php echo url('/admin/commercants'); ?>" class="btn btn-secondary">Retour</a>

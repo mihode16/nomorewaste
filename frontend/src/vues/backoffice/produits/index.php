@@ -1,3 +1,15 @@
+<?php
+/**
+ * @var string $titre
+ * @var string $pageActive
+ * @var array $produits
+ * @var string $filtre_recherche
+ * @var string $filtre_categorie
+ * @var string $filtre_statut
+ * @var string $filtre_tri
+ * @var array $categories
+ */
+?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?php echo htmlspecialchars($titre); ?></h2>
     <a href="<?php echo url('/admin/produits/creer'); ?>" class="btn btn-success"><i class="bi bi-plus-circle"></i> Ajouter</a>
@@ -18,6 +30,15 @@
                     <?php echo htmlspecialchars($cat); ?>
                 </option>
             <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="statut" class="form-select form-select-sm">
+            <option value="">Tous les statuts</option>
+            <option value="À venir" <?php echo ($filtre_statut ?? '') === 'À venir' ? 'selected' : ''; ?>>À venir</option>
+            <option value="Stocké" <?php echo ($filtre_statut ?? '') === 'Stocké' ? 'selected' : ''; ?>>Stocké</option>
+            <option value="À distribuer" <?php echo ($filtre_statut ?? '') === 'À distribuer' ? 'selected' : ''; ?>>À distribuer</option>
+            <option value="Distribué" <?php echo ($filtre_statut ?? '') === 'Distribué' ? 'selected' : ''; ?>>Distribué</option>
         </select>
     </div>
     <div class="col-md-2">

@@ -1,4 +1,11 @@
-<?php $p = $produit; ?>
+<?php
+/**
+ * @var string $titre
+ * @var string $pageActive
+ * @var array $produit
+ * @var array $collectes
+ */
+$p = $produit; ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?php echo htmlspecialchars($titre); ?></h2>
     <a href="<?php echo url('/admin/produits'); ?>" class="btn btn-secondary">Retour</a>

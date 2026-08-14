@@ -2,7 +2,6 @@ package controleurs
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"nomorewaste/internal/modeles"
+	"nomorewaste/internal/repositories"
 	"nomorewaste/internal/services"
 )
 
@@ -24,17 +24,17 @@ func NouveauCommercantControleur(service *services.CommercantService) *Commercan
 func (c *CommercantControleur) Creer(w http.ResponseWriter, r *http.Request) {
     var req modeles.CommercantCreation
     if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        log.Printf("❌ Erreur de décodage JSON: %v", err)
         http.Error(w, "Requête invalide", http.StatusBadRequest)
         return
     }
 
-    log.Printf("📝 Création d'un commerçant: email=%s, raison_sociale=%s", req.Email, req.RaisonSociale)
-
     id, err := c.service.Creer(&req)
     if err != nil {
-        log.Printf("❌ Erreur création commerçant: %v", err)
-        http.Error(w, err.Error(), http.StatusBadRequest)
+        code := http.StatusBadRequest
+        if err == repositories.ErrEmailExiste {
+            code = http.StatusConflict
+        }
+        ecrireErreurJSON(w, err.Error(), code)
         return
     }
 
@@ -113,7 +113,6 @@ func (c *CommercantControleur) MettreAJour(w http.ResponseWriter, r *http.Reques
     }
 
     if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        log.Printf("❌ Erreur de décodage JSON: %v", err)
         http.Error(w, "Requête invalide", http.StatusBadRequest)
         return
     }
@@ -149,7 +148,6 @@ func (c *CommercantControleur) MettreAJour(w http.ResponseWriter, r *http.Reques
     }
 
     if err := c.service.MettreAJour(&commercant); err != nil {
-        log.Printf("❌ Erreur mise à jour commerçant %d: %v", id, err)
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }

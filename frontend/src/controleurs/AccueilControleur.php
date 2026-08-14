@@ -6,7 +6,7 @@ class AccueilControleur extends Controleur
 {
     public function index(): void
     {
-        $this->rendre('front/contenu/accueil', [
+        $this->rendre('frontoffice/contenu/accueil', [
             'titre' => __('home_title'),
         ], 'front');
     }

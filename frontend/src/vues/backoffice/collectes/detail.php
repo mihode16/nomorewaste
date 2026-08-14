@@ -1,3 +1,12 @@
+<?php
+/**
+ * @var string $titre
+ * @var string $pageActive
+ * @var array $collecte
+ * @var array $produits
+ * @var array $benevolesMap
+ */
+?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?php echo htmlspecialchars($titre); ?></h2>
     <a href="<?php echo url('/admin/collectes'); ?>" class="btn btn-secondary">
@@ -74,7 +83,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>Produits de la collecte</span>
                 <?php
-                $peutAjouter = (!empty($collecte['validee']) && ($collecte['statut'] ?? '') === 'Terminée');
+                $peutAjouter = true;
                 ?>
                 <?php if ($peutAjouter): ?>
                     <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#ajouterProduitModal">
@@ -96,6 +105,7 @@
                                     <th>Qté</th>
                                     <th>Péremption</th>
                                     <th>Statut</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -124,6 +134,14 @@
                                             }
                                             ?>
                                         </td>
+                                        <td>
+                                            <form method="POST" action="<?php echo url('/admin/produits/' . (int)$p['id'] . '/supprimer'); ?>" onsubmit="return confirm('Supprimer ce produit ?');">
+                                                <input type="hidden" name="retour" value="/admin/collectes/<?php echo (int)$collecte['id']; ?>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -149,6 +167,7 @@
                                     <th>Compétences</th>
                                     <th>Confirmation</th>
                                     <th>Date</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -194,6 +213,13 @@
                                             <?php else: ?>
                                                 —
                                             <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <form method="POST" action="<?php echo url('/admin/collectes/' . (int)$collecte['id'] . '/benevoles/' . $benevoleId . '/supprimer'); ?>" onsubmit="return confirm('Retirer ce bénévole de la collecte ?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Retirer">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

@@ -1,3 +1,14 @@
+<?php
+/**
+ * @var string $titre
+ * @var string $pageActive
+ * @var array $commercants
+ * @var string $filtre_raison_sociale
+ * @var string $filtre_statut
+ * @var string $filtre_type
+ * @var array $types
+ */
+?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?php echo htmlspecialchars($titre ?? 'Gestion des commerçants'); ?></h2>
     <a href="<?php echo url('/admin/commercants/creer'); ?>" class="btn btn-success btn-sm">
@@ -92,22 +103,8 @@
                                 </td>
                                 <td>
                                     <?php if ($estValide): ?>
-                                        <?php
-                                        $fin = strtotime($c['date_fin_adhesion']);
-                                        $now = time();
-                                        $diff = $fin - $now;
-                                        $joursRestants = floor($diff / (24 * 60 * 60));
-                                        $aDemande = !empty($c['demande_renouvellement']);
-                                        ?>
-                                        <?php if ($fin < $now): ?>
-                                            <span class="badge bg-danger">Expiré</span>
-                                        <?php elseif ($joursRestants <= 30 && $aDemande): ?>
-                                            <span class="badge bg-info text-dark">À renouveler</span>
-                                        <?php elseif ($joursRestants <= 30): ?>
-                                            <span class="badge bg-warning text-dark">Expire bientôt</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-success">Actif</span>
-                                        <?php endif; ?>
+                                        <?php $statutCalcule = statut_adhesion_calcule($c); ?>
+                                        <span class="badge <?php echo $statutCalcule['classe']; ?>"><?php echo $statutCalcule['label']; ?></span>
                                     <?php else: ?>
                                         <span class="text-muted">—</span>
                                     <?php endif; ?>
@@ -117,6 +114,13 @@
                                         <a href="<?php echo url('/admin/commercants/' . $c['id'] . '/modifier'); ?>" class="btn btn-primary btn-sm" title="Modifier">
                                             <i class="bi bi-pencil"></i>
                                         </a>
+                                        <?php if (!$estValide): ?>
+                                            <form method="POST" action="<?php echo url('/admin/commercants/' . $c['id'] . '/valider'); ?>" class="d-inline" onsubmit="return confirm('Valider ce commerçant ?');">
+                                                <button type="submit" class="btn btn-success btn-sm" title="Valider">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
                                         <?php if ($estValide): ?>
                                             <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#renouvelerModal<?php echo $c['id']; ?>" title="Renouveler">
                                                 <i class="bi bi-arrow-repeat"></i>

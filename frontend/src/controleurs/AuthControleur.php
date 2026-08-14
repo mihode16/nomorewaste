@@ -16,11 +16,11 @@ class AuthControleur extends Controleur
     public function login(): void
     {
         if ($this->estConnecte()) {
-            $this->rediriger('/admin/dashboard');
+            $this->rediriger($this->espacePourRole($_SESSION['user']['type_utilisateur'] ?? ''));
             return;
         }
-        $this->rendre('backoffice/contenu/auth_login', [
-            'titre' => 'Connexion administration',
+        $this->rendre('contenu/auth_login', [
+            'titre' => 'Connexion',
         ], 'none');
     }
 
@@ -34,20 +34,22 @@ class AuthControleur extends Controleur
             'mot_de_passe' => $motDePasse,
         ]);
 
-        if ($response['code'] === 200 && !empty($response['data'])) {
+        if ($response['code'] === 200 && !empty($response['data']) && empty($response['data']['error'])) {
             $_SESSION['user'] = $response['data'];
             $_SESSION['flash'] = ['type' => 'success', 'message' => 'Bienvenue !'];
-            $this->rediriger('/admin/dashboard');
+            $this->rediriger($this->espacePourRole($response['data']['type_utilisateur'] ?? ''));
+            return;
         }
 
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Identifiants incorrects'];
-        $this->rediriger('/admin');
+        $message = $response['data']['error'] ?? 'Identifiants incorrects';
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => $message];
+        $this->rediriger('/connexion');
     }
 
     public function deconnecter(): void
     {
         session_destroy();
         session_start();
-        $this->rediriger('/admin');
+        $this->rediriger('/connexion');
     }
 }

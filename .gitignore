@@ -12,6 +12,8 @@ backend/tmp
 backend/*.exe
 backend/*.test
 backend/vendor/
+backend/storage/pdfs/
+backend/storage/plannings/
 
 # PHP
 frontend/vendor/

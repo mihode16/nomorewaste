@@ -1,4 +1,11 @@
-<?php $t = $tournee; ?>
+<?php
+/**
+ * @var string $titre
+ * @var string $pageActive
+ * @var array $tournee
+ * @var array $benevolesMap
+ */
+$t = $tournee; ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?php echo htmlspecialchars($titre); ?></h2>
     <a href="<?php echo url('/admin/tournees'); ?>" class="btn btn-secondary">Retour</a>
@@ -18,8 +25,23 @@
                     <dd class="col-sm-8"><?php echo htmlspecialchars($t['adresse_depart']); ?></dd>
                     <dt class="col-sm-4">Statut</dt>
                     <dd class="col-sm-8"><?php echo badge_statut($t['statut']); ?></dd>
-                    <dt class="col-sm-4">Bénévole</dt>
-                    <dd class="col-sm-8">#<?php echo (int)($t['benevole_id'] ?? 0); ?></dd>
+                    <dt class="col-sm-4">Bénévole chauffeur</dt>
+                    <dd class="col-sm-8">
+                        <?php if (!empty($t['benevole']) && !empty($t['benevole']['nom'])): ?>
+                            <?php echo htmlspecialchars($t['benevole']['prenom'] . ' ' . $t['benevole']['nom']); ?>
+                            (ID #<?php echo (int)$t['benevole_id']; ?>)
+                        <?php else: ?>
+                            #<?php echo (int)($t['benevole_id'] ?? 0); ?>
+                        <?php endif; ?>
+                    </dd>
+                    <dt class="col-sm-4">Lieu de distribution</dt>
+                    <dd class="col-sm-8">
+                        <?php if (!empty($t['lieu_distribution'])): ?>
+                            <?php echo htmlspecialchars($t['lieu_distribution']['nom'] . ' — ' . $t['lieu_distribution']['adresse']); ?>
+                        <?php else: ?>
+                            —
+                        <?php endif; ?>
+                    </dd>
                 </dl>
             </div>
         </div>
@@ -57,6 +79,94 @@
                         <?php endif; ?>
                     </tbody>
                 </table>
+            </div>
+        </div>
+        <div class="card mt-3">
+            <div class="card-header">Bénévoles associés</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nom</th>
+                                <th>Compétences</th>
+                                <th>Confirmation</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><?php echo (int)($t['benevole_id'] ?? 0); ?></td>
+                                <td>
+                                    <?php echo !empty($t['benevole']['nom']) ? htmlspecialchars($t['benevole']['prenom'] . ' ' . $t['benevole']['nom']) : '#' . (int)($t['benevole_id'] ?? 0); ?>
+                                    <span class="badge bg-info text-dark">Chauffeur</span>
+                                </td>
+                                <td>
+                                    <?php
+                                    $benevoleId = (int)($t['benevole_id'] ?? 0);
+                                    $competences = $benevolesMap[$benevoleId]['competences'] ?? [];
+                                    if (!empty($competences)):
+                                        foreach ($competences as $c): ?>
+                                            <span class="badge bg-secondary me-1"><?php echo htmlspecialchars($c); ?></span>
+                                        <?php endforeach;
+                                    else: ?>
+                                        <span class="text-muted">Aucune</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if (!empty($t['chauffeur_confirme'])): ?>
+                                        <span class="badge bg-success">Confirmé</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-warning text-dark">En attente</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php echo !empty($t['date_confirmation_chauffeur']) ? format_datetime($t['date_confirmation_chauffeur']) : '—'; ?>
+                                </td>
+                            </tr>
+                            <?php if (empty($t['benevoles_confirmation'])): ?>
+                                <tr><td colspan="5" class="text-center text-muted">Aucun bénévole supplémentaire</td></tr>
+                            <?php else: ?>
+                                <?php foreach ($t['benevoles_confirmation'] as $tb): ?>
+                                    <?php $benevoleId = (int)$tb['benevole_id']; ?>
+                                    <tr>
+                                        <td><?php echo $benevoleId; ?></td>
+                                        <td>
+                                            <?php
+                                            echo isset($benevolesMap[$benevoleId])
+                                                ? htmlspecialchars($benevolesMap[$benevoleId]['nom'])
+                                                : htmlspecialchars(($tb['benevole_prenom'] ?? '') . ' ' . ($tb['benevole_nom'] ?? ''));
+                                            ?>
+                                        </td>
+                                        <td>
+                                            <?php
+                                            $competences = $benevolesMap[$benevoleId]['competences'] ?? [];
+                                            if (!empty($competences)):
+                                                foreach ($competences as $c): ?>
+                                                    <span class="badge bg-secondary me-1"><?php echo htmlspecialchars($c); ?></span>
+                                                <?php endforeach;
+                                            else: ?>
+                                                <span class="text-muted">Aucune</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if (!empty($tb['confirme'])): ?>
+                                                <span class="badge bg-success">Confirmé</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-warning text-dark">En attente</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php echo !empty($tb['date_confirmation']) ? format_datetime($tb['date_confirmation']) : '—'; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted small mt-2 mb-0">La confirmation sera faite par chaque bénévole depuis son espace personnel (à venir). Une fois tous confirmés, la tournée passe automatiquement en "Terminée".</p>
             </div>
         </div>
     </div>

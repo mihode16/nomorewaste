@@ -1,3 +1,14 @@
+<?php
+/**
+ * @var string $titre
+ * @var string $pageActive
+ * @var array $collectes
+ * @var string $filtre_commercant
+ * @var string $filtre_statut
+ * @var string $filtre_date_debut
+ * @var string $filtre_date_fin
+ */
+?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?php echo htmlspecialchars($titre ?? 'Gestion des collectes'); ?></h2>
     <a href="<?php echo url('/admin/collectes/creer'); ?>" class="btn btn-success">
@@ -115,6 +126,9 @@
                                         <form method="POST" action="<?php echo url('/admin/collectes/' . $c['id'] . '/supprimer'); ?>" style="display:inline;" onsubmit="return confirm('Supprimer ?')">
                                             <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i></button>
                                         </form>
+                                        <?php if ($c['statut'] === 'Terminée'): ?>
+                                            <a href="<?php echo url('/admin/collectes/' . $c['id'] . '/pdf'); ?>" class="btn btn-outline-secondary" title="PDF récapitulatif" target="_blank"><i class="bi bi-file-earmark-pdf"></i></a>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

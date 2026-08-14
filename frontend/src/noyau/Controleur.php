@@ -69,10 +69,38 @@ class Controleur
         return isset($_SESSION['user']) && !empty($_SESSION['user']);
     }
 
-    protected function verifierAuthentification(): void
+    /**
+     * Vérifie que l'utilisateur est connecté ET a un profil autorisé pour ce contrôleur.
+     * Par défaut restreint aux comptes 'responsable' (comportement historique du
+     * backoffice) : tout contrôleur qui n'a pas explicitement besoin d'ouvrir l'accès
+     * à un autre profil reste protégé sans rien avoir à changer. Les espaces dédiés
+     * (ex: commerçant) passent explicitement leur(s) rôle(s) autorisé(s).
+     */
+    protected function verifierAuthentification(array $rolesAutorises = ['responsable']): void
     {
         if (!$this->estConnecte()) {
-            $this->rediriger('/admin');
+            $this->rediriger('/connexion');
+            return;
+        }
+        $role = $_SESSION['user']['type_utilisateur'] ?? '';
+        if (!empty($rolesAutorises) && !in_array($role, $rolesAutorises, true)) {
+            $this->rediriger($this->espacePourRole($role));
+        }
+    }
+
+    protected function espacePourRole(string $role): string
+    {
+        switch ($role) {
+            case 'commercant':
+                return '/commercant/dashboard';
+            case 'adherent':
+                return '/adherent/dashboard';
+            case 'benevole':
+                return '/benevole/dashboard';
+            case 'responsable':
+                return '/admin/dashboard';
+            default:
+                return '/connexion';
         }
     }
 }
