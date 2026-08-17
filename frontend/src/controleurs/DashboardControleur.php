@@ -60,6 +60,24 @@ class DashboardControleur extends Controleur
         ]);
     }
 
+    /** Déclenche immédiatement les tâches quotidiennes (rappels de renouvellement + plannings). */
+    public function executerTachesQuotidiennes(): void
+    {
+        $this->verifierAuthentification();
+        if (!$this->estPost()) {
+            $this->rediriger('/admin/dashboard');
+            return;
+        }
+
+        $response = $this->apiClient->post('/api/taches/executer-quotidien', []);
+        if ($response['code'] === 200) {
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Tâches quotidiennes exécutées (rappels de renouvellement + plannings bénévoles).'];
+        } else {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreur lors de l\'exécution des tâches quotidiennes.'];
+        }
+        $this->rediriger('/admin/dashboard');
+    }
+
     private function grouperParChamp(array $items, string $champ): array
     {
         $compte = [];

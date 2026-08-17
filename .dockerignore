@@ -1,0 +1,20 @@
+# Fichiers générés localement, jamais nécessaires dans les images Docker (les PDF/plannings de
+# démo sont régénérés à la volée et persistés via les volumes db_data/backend_pdfs/backend_plannings).
+backend/storage/pdfs/*
+backend/storage/plannings/*
+!backend/storage/pdfs/.gitkeep
+!backend/storage/plannings/.gitkeep
+
+.git
+.gitignore
+*.md
+.env
+.env.*
+!.env.example
+
+.vscode
+.idea
+
+docker-compose.yml
+deploy.sh
+deploy.ps1

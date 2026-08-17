@@ -11,9 +11,8 @@ import (
 	"nomorewaste/internal/repositories"
 )
 
-// RecapService génère les PDF récapitulatifs de collectes et tournées terminées et
-// les conserve sur disque. Ils sont consultés depuis le backoffice (pas d'envoi par
-// email : la livraison directe dans un futur espace commerçant est prévue plus tard).
+// RecapService génère les PDF récapitulatifs de collectes et tournées terminées et les
+// conserve sur disque.
 type RecapService struct {
 	produitRepo     *repositories.ProduitRepository
 	logoPath        string
@@ -106,10 +105,7 @@ func (s *RecapService) ObtenirCollectePDF(collecte *modeles.Collecte) ([]byte, e
 	return s.genererCollectePDF(collecte)
 }
 
-// TraiterCollecteTerminee génère le PDF récapitulatif d'une collecte qui vient de se
-// terminer. Le PDF est simplement stocké : il est consultable depuis le backoffice
-// (pas d'envoi par email — la livraison directe dans l'espace commerçant est prévue
-// pour plus tard, une fois cet espace construit).
+// TraiterCollecteTerminee génère le PDF récapitulatif d'une collecte qui vient de se terminer.
 func (s *RecapService) TraiterCollecteTerminee(collecte *modeles.Collecte) {
 	if _, err := s.genererCollectePDF(collecte); err != nil {
 		log.Printf("❌ Erreur génération PDF collecte %d: %v", collecte.ID, err)

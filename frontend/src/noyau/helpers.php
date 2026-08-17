@@ -20,9 +20,6 @@ function lang(): string
     return 'fr';
 }
 
-// Textes sources en français : la traduction visible dans les autres langues (anglais, italien,
-// portugais, irlandais) est assurée par le widget de traduction du site (voir traduction_widget.php),
-// qui traduit la page entière côté client — ces textes n'ont donc besoin d'exister qu'en français.
 function __(string $key): string
 {
     static $traductions = [
@@ -66,10 +63,7 @@ function format_datetime(?string $date, string $format = 'd/m/Y H:i'): string
     return $ts ? date($format, $ts) : '-';
 }
 
-/**
- * Une adhésion (commerçant ou adhérent) est valide pour participer (planifier une collecte,
- * s'inscrire à un service...) si elle a été validée par un admin ET n'est pas expirée.
- */
+/** Une adhésion est valide si elle a été validée par un admin ET n'est pas expirée. */
 function adhesion_est_valide(?array $entite): bool
 {
     if (!$entite || ($entite['statut_adhesion'] ?? '') !== 'valide') {

@@ -1,7 +1,4 @@
-// Commande à usage unique : hache en bcrypt tous les mots de passe encore stockés en clair
-// dans la table utilisateur (ceux créés avant la mise en place du hachage). Un mot de passe
-// déjà haché en bcrypt (préfixe $2a$/$2b$/$2y$, longueur 60) est laissé tel quel, ce qui rend
-// la commande sûre à relancer plusieurs fois sans double-hacher les mots de passe déjà migrés.
+// Hache en bcrypt tous les mots de passe encore stockés en clair.
 package main
 
 import (
@@ -46,7 +43,7 @@ func main() {
 	}
 	rows.Close()
 
-	log.Printf("%d mot(s) de passe en clair à migrer vers bcrypt (sur un total scanné)", len(aTraiter))
+	log.Printf("%d mot(s) de passe en clair à migrer vers bcrypt", len(aTraiter))
 
 	nbOK := 0
 	for _, u := range aTraiter {

@@ -1,19 +1,14 @@
 <?php
 /**
- * Widget de traduction du site (fr/en/it/pt/ga) — implémentation maison, sans widget tiers
- * visible. Le choix de langue est mémorisé via un cookie (persistant sur toutes les pages, quel
- * que soit l'espace : public, commerçant, adhérent, bénévole, admin). La traduction elle-même
- * passe par l'API MyMemory (indépendante de Google, gratuite, sans clé ni compte requis) : les
- * textes de la page sont traduits puis remplacés directement dans le DOM, en arrière-plan, sans
- * aucune bannière ni interface tierce injectée. À inclure une seule fois par page, dans le <body>.
+ * Widget de traduction du site (fr/en/it/pt/ga). Le choix de langue est mémorisé via un cookie,
+ * persistant sur toutes les pages. La traduction passe par l'API MyMemory : les textes de la
+ * page sont traduits puis remplacés directement dans le DOM. À inclure une seule fois par page.
  *
- * Optimisations pour limiter le temps de traduction :
- * - les occurrences identiques d'un même texte (boutons "Modifier", badges de statut...) ne sont
- *   traduites qu'une seule fois puis appliquées à toutes les occurrences ;
- * - les textes sans aucune lettre (nombres, dates, "#12"...) ne sont pas envoyés à l'API ;
- * - les requêtes tournent avec un pool à concurrence constante (dès qu'une se termine, la
- *   suivante démarre aussitôt) plutôt que par lots figés qui attendent la plus lente à chaque tour ;
- * - les traductions déjà vues sont mises en cache dans le navigateur d'une page à l'autre.
+ * Optimisations :
+ * - les occurrences identiques d'un même texte ne sont traduites qu'une seule fois ;
+ * - les textes sans aucune lettre ne sont pas envoyés à l'API ;
+ * - les requêtes tournent avec un pool à concurrence constante ;
+ * - les traductions déjà vues sont mises en cache dans le navigateur.
  */
 ?>
 <script>

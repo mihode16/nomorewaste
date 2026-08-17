@@ -23,6 +23,11 @@
             <p class="text-muted mb-0">Bienvenue, <?php echo htmlspecialchars($user['prenom'] . ' ' . $user['nom']); ?></p>
         <?php endif; ?>
     </div>
+    <form method="POST" action="<?php echo url('/admin/dashboard/executer-taches'); ?>" onsubmit="return confirm('Exécuter maintenant les rappels de renouvellement et l\'envoi des plannings bénévoles du jour ?');">
+        <button type="submit" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-envelope-arrow-up"></i> Exécuter les tâches quotidiennes maintenant
+        </button>
+    </form>
 </div>
 
 <!-- Statistiques -->

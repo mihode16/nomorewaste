@@ -36,6 +36,7 @@ func main() {
 	messageRepo := repositories.NouveauMessageRepository(db)
 	disponibiliteRepo := repositories.NouveauDisponibiliteRepository(db)
 	planningRepo := repositories.NouveauPlanningRepository(db)
+	rappelRepo := repositories.NouveauRappelRepository(db)
 
 	recapService := services.NouveauRecapService(produitRepo, config.LogoPath, "storage/pdfs")
 
@@ -50,7 +51,10 @@ func main() {
 	responsableService := services.NouveauResponsableService(responsableRepo)
 	messageService := services.NouveauMessageService(messageRepo)
 	disponibiliteService := services.NouveauDisponibiliteService(disponibiliteRepo)
-	planningService := services.NouveauPlanningService(planningRepo, benevoleRepo, collecteRepo, tourneeRepo, serviceRepo, "storage/plannings")
+	planningService := services.NouveauPlanningService(planningRepo, benevoleRepo, collecteRepo, tourneeRepo, serviceRepo, "storage/plannings", config)
+	rappelService := services.NouveauRappelService(config, rappelRepo, commercantRepo, serviceRepo)
+	schedulerService := services.NouveauSchedulerService(rappelService, planningService, config.SchedulerHeure)
+	schedulerService.Demarrer()
 
 	commercantControleur := controleurs.NouveauCommercantControleur(commercantService)
 	collecteControleur := controleurs.NouveauCollecteControleur(collecteService)
@@ -64,6 +68,7 @@ func main() {
 	messageControleur := controleurs.NouveauMessageControleur(messageService)
 	disponibiliteControleur := controleurs.NouveauDisponibiliteControleur(disponibiliteService)
 	planningControleur := controleurs.NouveauPlanningControleur(planningService)
+	tacheControleur := controleurs.NouveauTacheControleur(schedulerService)
 
 	router := mux.NewRouter()
 
@@ -176,6 +181,8 @@ func main() {
 	router.HandleFunc("/api/conversations/{id}/messages", messageControleur.AjouterMessage).Methods("POST")
 	router.HandleFunc("/api/conversations/{id}/cloturer", messageControleur.Cloturer).Methods("POST")
 	router.HandleFunc("/api/conversations/{id}/lu", messageControleur.MarquerLu).Methods("POST")
+
+	router.HandleFunc("/api/taches/executer-quotidien", tacheControleur.ExecuterMaintenant).Methods("POST")
 
 	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

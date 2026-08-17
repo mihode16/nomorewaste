@@ -86,6 +86,7 @@ class Routeur
 
         // Backoffice
         $this->ajouterRoute('GET', '/admin/dashboard', 'DashboardControleur', 'index');
+        $this->ajouterRoute('POST', '/admin/dashboard/executer-taches', 'DashboardControleur', 'executerTachesQuotidiennes');
 
         // Commerçants
         $this->ajouterRoute('GET', '/admin/commercants', 'CommercantControleur', 'index');
