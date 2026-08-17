@@ -56,7 +56,7 @@
         <div class="card login-card">
             <div class="login-card-accent"></div>
             <div class="login-brand">
-                <img src="/nomorewaste/assets/logo.png" alt="NO MORE WASTE">
+                <img src="<?php echo url('/assets/logo.png'); ?>" alt="NO MORE WASTE">
                 <h4 class="text-success fw-bold mb-0 notranslate">NO MORE WASTE</h4>
                 <p class="text-muted small mb-0">Connexion à votre espace</p>
             </div>

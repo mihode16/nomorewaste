@@ -36,7 +36,7 @@
 <nav class="navbar navbar-expand-lg site-header sticky-top py-2">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center fw-bold text-success notranslate" href="<?php echo url('/'); ?>">
-            <img src="/nomorewaste/assets/logo.png" alt="NO MORE WASTE">
+            <img src="<?php echo url('/assets/logo.png'); ?>" alt="NO MORE WASTE">
             NO MORE WASTE
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navPublic">
@@ -70,7 +70,7 @@
         <div class="row gy-3 align-items-start">
             <div class="col-md-5">
                 <a class="d-flex align-items-center fw-bold text-white text-decoration-none mb-2 notranslate" href="<?php echo url('/'); ?>">
-                    <img src="/nomorewaste/assets/logo.png" alt="NO MORE WASTE" style="height:28px;border-radius:6px;margin-right:.5rem;">
+                    <img src="<?php echo url('/assets/logo.png'); ?>" alt="NO MORE WASTE" style="height:28px;border-radius:6px;margin-right:.5rem;">
                     NO MORE WASTE
                 </a>
                 <p class="small mb-0">Association de lutte contre le gaspillage alimentaire.</p>

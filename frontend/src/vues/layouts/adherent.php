@@ -23,7 +23,7 @@ $nbMessagesNonLus = ($__nonLusReponse['code'] === 200) ? (int)($__nonLusReponse[
 <nav class="navbar navbar-expand-lg navbar-dark bg-success">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center fw-bold notranslate" href="<?php echo url('/adherent/dashboard'); ?>">
-            <img src="/nomorewaste/assets/logo.png" alt="NO MORE WASTE">
+            <img src="<?php echo url('/assets/logo.png'); ?>" alt="NO MORE WASTE">
             NO MORE WASTE
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navEspace">

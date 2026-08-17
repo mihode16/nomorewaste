@@ -24,7 +24,7 @@ $nbMessagesNonLus = ($__nonLusReponse['code'] === 200) ? (int)($__nonLusReponse[
     <div class="row">
         <div class="col-md-2 sidebar p-0">
             <div class="p-3 d-flex align-items-center">
-                <img src="/nomorewaste/assets/logo.png" style="height:55px; object-fit:cover; border-radius: 11px; margin-right:10px;">
+                <img src="<?php echo url('/assets/logo.png'); ?>" style="height:55px; object-fit:cover; border-radius: 11px; margin-right:10px;">
                 <div>
                     <h4 class="text-white mb-0 notranslate">NO MORE WASTE</h4>
                     <small class="text-white-50">Interface admin</small>
