@@ -27,7 +27,7 @@ function Get-EnvValue($cle, $defaut) {
     return $defaut
 }
 
-$frontendPort = Get-EnvValue "FRONTEND_PORT_HOTE" "8080"
+$frontendPort = Get-EnvValue "HTTP_PORT_HOTE" "80"
 $apiPort = Get-EnvValue "API_PORT_HOTE" "8081"
 
 Write-Host "Attente que les services soient prets..."

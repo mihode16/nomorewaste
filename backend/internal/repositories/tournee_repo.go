@@ -414,7 +414,7 @@ func (r *TourneeRepository) MettreAJour(t *modeles.TourneeUpdate) error {
     return tx.Commit()
 }
 
-// Supprimer une tournée (soft delete ou physique ? On fait physique pour l'instant)
+// Supprimer supprime définitivement une tournée.
 func (r *TourneeRepository) Supprimer(id int) error {
     // Récupérer les produits pour remettre leur statut en "Stocké"
     rows, err := r.db.Query(`SELECT produit_id FROM tournee_produit WHERE tournee_id = ?`, id)

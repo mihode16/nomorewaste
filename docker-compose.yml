@@ -40,7 +40,7 @@ services:
       DB_NAME: ${DB_NAME:-nomorewaste}
       API_PORT: 8081
       LOGO_PATH: /assets/logo.png
-      SITE_URL: ${SITE_URL:-http://localhost:8080}
+      SITE_URL: ${SITE_URL:-http://localhost}
       SCHEDULER_HEURE: ${SCHEDULER_HEURE:-6}
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
@@ -67,8 +67,23 @@ services:
     environment:
       API_URL: http://backend:8081
       BASE_URL: ""
+    networks:
+      - nomorewaste
+
+  # ==================== NGINX (entrée publique HTTP/HTTPS) ====================
+  nginx:
+    image: nginx:alpine
+    container_name: nomorewaste_nginx
+    restart: unless-stopped
+    depends_on:
+      - frontend
     ports:
-      - "${FRONTEND_PORT_HOTE:-8080}:80"
+      - "${HTTP_PORT_HOTE:-80}:80"
+      - "${HTTPS_PORT_HOTE:-443}:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./certbot-webroot:/var/www/certbot
     networks:
       - nomorewaste
 

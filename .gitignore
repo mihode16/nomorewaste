@@ -27,4 +27,7 @@ Thumbs.db
 
 # Logs
 *.log
-logs/.secrets/
+logs/
+
+# Secrets (clés SSH, mots de passe serveurs)
+.secrets/

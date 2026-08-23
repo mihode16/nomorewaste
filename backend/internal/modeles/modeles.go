@@ -128,7 +128,6 @@ type Disponibilite struct {
 // ============================================================
 // COLLECTE
 // ============================================================
-// Modifiez la structure Collecte existante
 type Collecte struct {
     ID                 int        `json:"id"`
     DateHeureCollecte  time.Time  `json:"date_heure_collecte"`

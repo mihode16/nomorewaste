@@ -27,7 +27,6 @@ func (s *CommercantService) Creer(commercant *modeles.CommercantCreation) (int, 
     if commercant.Siret == "" {
         return 0, errors.New("le SIRET est requis")
     }
-    // Ajoutez aussi la vérification de la raison sociale ?
     if commercant.RaisonSociale == "" {
         return 0, errors.New("la raison sociale est requise")
     }

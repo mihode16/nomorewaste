@@ -22,8 +22,8 @@ echo "🚀 Construction des images et démarrage des services..."
 docker compose up -d --build
 
 echo "⏳ Attente que les services soient prêts..."
-FRONTEND_PORT=$( (grep -E '^FRONTEND_PORT_HOTE=' .env || true) | cut -d= -f2 | tr -d '\r' )
-FRONTEND_PORT=${FRONTEND_PORT:-8080}
+HTTP_PORT=$( (grep -E '^HTTP_PORT_HOTE=' .env || true) | cut -d= -f2 | tr -d '\r' )
+HTTP_PORT=${HTTP_PORT:-80}
 API_PORT=$( (grep -E '^API_PORT_HOTE=' .env || true) | cut -d= -f2 | tr -d '\r' )
 API_PORT=${API_PORT:-8081}
 
@@ -40,7 +40,7 @@ until curl -sf "http://localhost:${API_PORT}/api/health" > /dev/null 2>&1; do
 done
 echo "✅ API Go opérationnelle."
 
-until curl -sf "http://localhost:${FRONTEND_PORT}/" > /dev/null 2>&1; do
+until curl -sf "http://localhost:${HTTP_PORT}/" > /dev/null 2>&1; do
     if [ "$ecoule" -ge "$ATTENTE_MAX" ]; then
         echo "❌ Le frontend ne répond toujours pas après ${ATTENTE_MAX}s. Logs :" >&2
         docker compose logs --tail=50 frontend
@@ -53,7 +53,7 @@ echo "✅ Frontend opérationnel."
 
 echo ""
 echo "🎉 Déploiement terminé."
-echo "   Site :  http://localhost:${FRONTEND_PORT}/"
+echo "   Site :  http://localhost:${HTTP_PORT}/"
 echo "   API  :  http://localhost:${API_PORT}/api/health"
 echo ""
 echo "Pour arrêter : docker compose down"

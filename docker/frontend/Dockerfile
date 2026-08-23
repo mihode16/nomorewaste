@@ -10,6 +10,10 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && a2enmod rewrite
 
+# Configuration de production : n'affiche jamais les erreurs PHP aux visiteurs (elles restent
+# journalisées dans les logs Apache).
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+
 COPY frontend/ /var/www/html/
 
 # DocumentRoot pointé sur public/, avec AllowOverride All pour que le .htaccess (réécriture
