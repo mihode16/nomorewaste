@@ -9,16 +9,16 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 if ! command -v docker &> /dev/null; then
-    echo "❌ Docker n'est pas installé ou n'est pas dans le PATH." >&2
+    echo " Docker n'est pas installé ou n'est pas dans le PATH." >&2
     exit 1
 fi
 
 if [ ! -f .env ]; then
-    echo "ℹ️  Aucun fichier .env trouvé, création à partir de .env.example (à personnaliser si besoin)."
+    echo "  Aucun fichier .env trouvé, création à partir de .env.example (à personnaliser si besoin)."
     cp .env.example .env
 fi
 
-echo "🚀 Construction des images et démarrage des services..."
+echo " Construction des images et démarrage des services..."
 docker compose up -d --build
 
 echo "⏳ Attente que les services soient prêts..."
@@ -31,25 +31,25 @@ ATTENTE_MAX=90
 ecoule=0
 until curl -sf "http://localhost:${API_PORT}/api/health" > /dev/null 2>&1; do
     if [ "$ecoule" -ge "$ATTENTE_MAX" ]; then
-        echo "❌ L'API Go ne répond toujours pas après ${ATTENTE_MAX}s. Logs :" >&2
+        echo " L'API Go ne répond toujours pas après ${ATTENTE_MAX}s. Logs :" >&2
         docker compose logs --tail=50 backend
         exit 1
     fi
     sleep 3
     ecoule=$((ecoule + 3))
 done
-echo "✅ API Go opérationnelle."
+echo " API Go opérationnelle."
 
 until curl -sf "http://localhost:${HTTP_PORT}/" > /dev/null 2>&1; do
     if [ "$ecoule" -ge "$ATTENTE_MAX" ]; then
-        echo "❌ Le frontend ne répond toujours pas après ${ATTENTE_MAX}s. Logs :" >&2
+        echo " Le frontend ne répond toujours pas après ${ATTENTE_MAX}s. Logs :" >&2
         docker compose logs --tail=50 frontend
         exit 1
     fi
     sleep 3
     ecoule=$((ecoule + 3))
 done
-echo "✅ Frontend opérationnel."
+echo " Frontend opérationnel."
 
 echo ""
 echo "🎉 Déploiement terminé."
